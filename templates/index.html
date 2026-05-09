@@ -125,7 +125,7 @@
         }
         
         .stat-label {
-            font-size: 0.75rem;
+            font-size: 0.95rem;
             color: var(--text-light);
         }
         
@@ -565,29 +565,29 @@
         
         .timeline-title {
             font-weight: 600;
-            font-size: 1.05rem;
+            font-size: 1.25rem;
             margin-bottom: 2px;
         }
 
         .timeline-desc {
-            font-size: 0.95rem;
+            font-size: 1.15rem;
             color: var(--text-light);
         }
 
         .timeline-time {
-            font-size: 0.95rem;
+            font-size: 1.15rem;
             color: var(--text-light);
             white-space: nowrap;
         }
 
         .timeline-meta {
-            font-size: 0.9rem;
+            font-size: 1.1rem;
             color: var(--text-light);
             margin-top: 2px;
         }
 
         .timeline-delete {
-            font-size: 0.85rem;
+            font-size: 1.05rem;
             color: #FF6B6B;
             cursor: pointer;
             padding: 4px 8px;
@@ -619,7 +619,7 @@
         }
         
         .stat-label {
-            font-size: 0.7rem;
+            font-size: 0.9rem;
             color: var(--text-light);
             margin-top: 2px;
         }
@@ -856,30 +856,34 @@
         .time-wheel {
             flex: 1;
             max-width: 80px;
-            overflow-y: scroll;
+            overflow-y: auto;
             scroll-snap-type: y mandatory;
             -webkit-overflow-scrolling: touch;
             scrollbar-width: none;
+            background: var(--card);
+            position: relative;
+            z-index: 1;
         }
-        
+
         .time-wheel::-webkit-scrollbar {
             display: none;
         }
-        
+
         .time-wheel-item {
             height: 40px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.2rem;
+            font-size: 1.3rem;
             scroll-snap-align: center;
-            color: var(--text-light);
+            color: #333;
+            font-weight: 500;
         }
-        
+
         .time-wheel-item.active {
-            color: var(--text);
-            font-weight: 600;
-            font-size: 1.4rem;
+            color: #007AFF;
+            font-weight: 700;
+            font-size: 1.5rem;
         }
         
         .time-wheel-separator {
@@ -913,11 +917,11 @@
             font-weight: 500;
             cursor: pointer;
         }
-        
+
         .date-picker-btn:active {
             opacity: 0.7;
         }
-        
+
         .date-picker-calendar {
             position: fixed;
             top: 0;
@@ -925,14 +929,18 @@
             right: 0;
             bottom: 0;
             background: rgba(0, 0, 0, 0.4);
-            z-index: 2000;
+            z-index: 2600;
             display: none;
             align-items: center;
             justify-content: center;
         }
-        
+
         .date-picker-calendar.active {
             display: flex;
+        }
+
+        #input-modal {
+            z-index: 2500;
         }
         
         .calendar-sheet {
@@ -1225,17 +1233,17 @@
         
         .timeline-title {
             font-weight: 500;
-            font-size: 0.95rem;
+            font-size: 1.15rem;
         }
-        
+
         .timeline-desc {
-            font-size: 0.8rem;
+            font-size: 1.0rem;
             color: var(--text-light);
             margin-top: 2px;
         }
-        
+
         .timeline-time {
-            font-size: 0.75rem;
+            font-size: 0.95rem;
             color: var(--text-light);
         }
         
@@ -1873,34 +1881,30 @@
                 return timeB.localeCompare(timeA);
             });
             
+            // 快速添加按钮（始终显示在顶部）
+            let html = `
+                <div style="display:flex;gap:10px;margin-bottom:15px;padding-bottom:15px;border-bottom:1px solid var(--border);">
+                    <div style="flex:1;text-align:center;padding:10px;background:#FFF3E0;border-radius:8px;cursor:pointer;" onclick="quickAdd('milk')">
+                        <div style="font-size:1.5rem;margin-bottom:5px;">🍼</div>
+                        <div style="font-size:0.9rem;color:#666;">喂奶</div>
+                    </div>
+                    <div style="flex:1;text-align:center;padding:10px;background:#E3F2FD;border-radius:8px;cursor:pointer;" onclick="quickAdd('sleep')">
+                        <div style="font-size:1.5rem;margin-bottom:5px;">😴</div>
+                        <div style="font-size:0.9rem;color:#666;">睡眠</div>
+                    </div>
+                    <div style="flex:1;text-align:center;padding:10px;background:#EFEBE9;border-radius:8px;cursor:pointer;" onclick="quickAdd('poop')">
+                        <div style="font-size:1.5rem;margin-bottom:5px;">💩</div>
+                        <div style="font-size:0.9rem;color:#666;">换尿布</div>
+                    </div>
+                </div>
+            `;
+
             if (todayRecords.length === 0) {
-                container.innerHTML = `
-                    <div class="timeline-item" onclick="quickAdd('milk')">
-                        <div class="timeline-icon milk">🍼</div>
-                        <div class="timeline-content">
-                            <div class="timeline-title">记录喂奶</div>
-                        </div>
-                        <div class="input-arrow">›</div>
-                    </div>
-                    <div class="timeline-item" onclick="quickAdd('sleep')">
-                        <div class="timeline-icon sleep">😴</div>
-                        <div class="timeline-content">
-                            <div class="timeline-title">记录睡眠</div>
-                        </div>
-                        <div class="input-arrow">›</div>
-                    </div>
-                    <div class="timeline-item" onclick="quickAdd('poop')">
-                        <div class="timeline-icon poop">💩</div>
-                        <div class="timeline-content">
-                            <div class="timeline-title">记录换尿布</div>
-                        </div>
-                        <div class="input-arrow">›</div>
-                    </div>
-                `;
+                html += `<div style="text-align:center;padding:20px;color:#999;">今天还没有记录</div>`;
+                container.innerHTML = html;
                 return;
             }
-            
-            let html = '';
+
             todayRecords.forEach((record, index) => {
                 const config = typeConfig[record.type];
                 const time = record.timestamp?.split(' ')[1]?.substring(0, 5) ||
@@ -2243,7 +2247,7 @@
                     </div>
                     <div class="form-group">
                         <label class="form-label">照片</label>
-                        <input type="file" class="form-input" id="milestone-photo" accept="image/*" capture="environment">
+                        <input type="file" class="form-input" id="milestone-photo" accept="image/*">
                     </div>
                     <button class="btn btn-primary btn-full" onclick="submitMilestone()">保存</button>
                 `;
@@ -2265,7 +2269,7 @@
                     </div>
                     <div class="form-group">
                         <label class="form-label">照片</label>
-                        <input type="file" class="form-input" id="photo-file" accept="image/*" capture="environment">
+                        <input type="file" class="form-input" id="photo-file" accept="image/*">
                     </div>
                     <div class="form-group">
                         <label class="form-label">说明</label>
@@ -3198,20 +3202,78 @@
             const date = document.getElementById('milestone-date').value;
             const category = document.getElementById('milestone-category').value;
             const description = document.getElementById('milestone-desc').value;
-            
+            const photoFile = document.getElementById('milestone-photo').files[0];
+
             if (!description) {
                 showToast('请输入描述');
                 return;
             }
-            
+
+            showToast('正在保存...');
+
+            let driveUrl = '';
+            if (photoFile) {
+                try {
+                    driveUrl = await uploadPhoto(photoFile);
+                } catch (err) {
+                    showToast('照片上传失败，继续保存文字记录');
+                }
+            }
+
             const data = {
                 type: 'milestone',
                 date: date,
                 category: category,
-                description: description
+                description: description,
+                drive_url: driveUrl
             };
-            
+
             await submitRecord(data, '里程碑');
+        }
+
+        async function submitPhoto() {
+            const date = document.getElementById('photo-date').value;
+            const time = document.getElementById('photo-time').value;
+            const caption = document.getElementById('photo-caption').value;
+            const photoFile = document.getElementById('photo-file').files[0];
+
+            if (!photoFile) {
+                showToast('请选择照片');
+                return;
+            }
+
+            showToast('正在上传照片...');
+
+            try {
+                const driveUrl = await uploadPhoto(photoFile);
+
+                const data = {
+                    type: 'photo',
+                    timestamp: `${date} ${time}:00`,
+                    drive_url: driveUrl,
+                    caption: caption
+                };
+
+                await submitRecord(data, '照片');
+            } catch (err) {
+                console.error('照片上传错误:', err);
+                showToast('照片上传失败: ' + err.message);
+            }
+        }
+
+        async function uploadPhoto(file) {
+            const formData = new FormData();
+            formData.append('file', file);
+
+            const res = await fetch('/api/upload', {
+                method: 'POST',
+                body: formData
+            });
+
+            if (!res.ok) throw new Error('上传失败');
+
+            const result = await res.json();
+            return result.drive_url;
         }
         
         async function submitRecord(data, typeName) {
