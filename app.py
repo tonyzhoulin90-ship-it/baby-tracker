@@ -57,23 +57,33 @@ def get_service_account_creds():
     """获取 Service Account 凭证（用于 Sheets）"""
     service_json = os.getenv('GOOGLE_SERVICE_ACCOUNT_JSON', '')
     if service_json:
+        print(f'GOOGLE_SERVICE_ACCOUNT_JSON 长度: {len(service_json)}')
         try:
             info = json.loads(service_json)
+            print('Service Account JSON 解析成功')
             return Credentials.from_service_account_info(
                 info,
                 scopes=['https://www.googleapis.com/auth/spreadsheets',
                         'https://www.googleapis.com/auth/drive.readonly']
             )
-        except json.JSONDecodeError:
-            pass
+        except json.JSONDecodeError as e:
+            print(f'Service Account JSON 解析错误: {e}')
+            print(f'JSON 前100字符: {service_json[:100]}')
+        except Exception as e:
+            print(f'Service Account 凭证创建错误: {e}')
+    else:
+        print('GOOGLE_SERVICE_ACCOUNT_JSON 环境变量未设置')
     
     # 尝试本地文件
     if os.path.exists('service_account.json'):
+        print('从本地文件 service_account.json 加载凭证')
         return Credentials.from_service_account_file(
             'service_account.json',
             scopes=['https://www.googleapis.com/auth/spreadsheets',
                     'https://www.googleapis.com/auth/drive.readonly']
         )
+    
+    print('无法获取 Service Account 凭证')
     return None
 
 
@@ -128,11 +138,19 @@ def ensure_worksheet(sh, name, headers):
 def init_spreadsheet():
     """初始化电子表格结构"""
     client = get_sheets_client()
-    if not client or not SHEET_ID:
+    if not client:
+        print('错误: 无法创建 Sheets 客户端，请检查 GOOGLE_SERVICE_ACCOUNT_JSON')
+        return None
+    
+    if not SHEET_ID:
+        print('错误: SHEET_ID 未设置')
         return None
     
     try:
+        print(f'正在连接 Google Sheet: {SHEET_ID}')
         sh = client.open_by_key(SHEET_ID)
+        print('成功连接到 Google Sheet')
+        
         # 确保 Sheet1 是成长记录表
         try:
             ws = sh.worksheet('Sheet1')
@@ -140,17 +158,22 @@ def init_spreadsheet():
             first_row = ws.row_values(1)
             if not first_row:
                 ws.append_row(SHEET_HEADERS['growth'])
-        except:
-            pass
+        except Exception as e:
+            print(f'Sheet1 检查错误: {e}')
         
         # 确保其他工作表存在
         for name, headers in SHEET_HEADERS.items():
             if name != 'growth':
-                ensure_worksheet(sh, name, headers)
+                try:
+                    ensure_worksheet(sh, name, headers)
+                except Exception as e:
+                    print(f'创建工作表 {name} 错误: {e}')
         
         return sh
     except Exception as e:
         print(f'初始化表格错误: {e}')
+        import traceback
+        traceback.print_exc()
         return None
 
 
