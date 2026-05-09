@@ -1,0 +1,40 @@
+## 架构
+
+单文件 Flask 后端 (`app.py`) + 单文件前端 (`templates/index.html`，所有 CSS/JS 内联）。无数据库，所有数据存 Google Sheets；照片存用户个人 Google Drive。
+
+**双凭证体系：**
+- Service Account → 读写 Google Sheets（`service_account.json` 本地 / `GOOGLE_SERVICE_ACCOUNT_JSON` 环境变量 Render）
+- OAuth Refresh Token → 上传照片到用户个人 Drive（`GOOGLE_OAUTH_CLIENT_ID/SECRET/REFRESH_TOKEN`）
+
+本地开发用 `.env` 文件加载环境变量（app.py 启动时自动读取）。
+
+## Google Sheets 结构
+
+- `Sheet1`（默认）：成长测量值 — `date, weight_kg, height_cm, head_cm`
+- 命名 worksheets：`milk / food / poop / sleep / photo / milestone / other`，字段见 `SHEET_HEADERS`
+
+`/api/add` 写入 `growth` 类型时走 `Sheet1`，其他类型走对应命名 worksheet（不存在则自动创建）。
+
+`/api/update` 的实现是：定位旧行删除 + 追加新行（不是原地修改）。
+
+
+## WHO 参考数据
+
+首次调用 `/api/data` 时自动从 WHO 官网下载 Excel，转为 CSV 缓存在 `data/who/`。已有文件则跳过下载。
+
+## 常量
+
+`BIRTH_DATE`、`SHEET_ID`、`OWNER_EMAIL` 硬编码在 `app.py` 顶部，改这里即可。
+
+## 时区
+
+用户在新加坡（UTC+8）。所有日期时间默认使用新加坡本地时间。
+
+**前端**：不要用 `new Date().toISOString().slice(0,10)` 获取今日日期，`toISOString()` 返回 UTC 时间，UTC+8 凌晨 8 点前会差一天。应改用本地时间分量：
+```js
+const n = new Date();
+`${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,'0')}-${String(n.getDate()).padStart(2,'0')}`
+```
+`todayStr()` 和 `daysAgo()` 已按此修复。新增任何用 `new Date()` 生成日期字符串的地方，都遵循同样写法。
+
+**后端**：`datetime.now()` 使用系统本地时间，Windows 部署在新加坡时区时无问题。Render 部署需确认服务器时区或显式使用 `datetime.now(tz=ZoneInfo("Asia/Singapore"))`。

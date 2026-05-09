@@ -1,0 +1,1698 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>宝宝成长记录</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        :root {
+            --primary: #4CAF50;
+            --primary-dark: #388E3C;
+            --secondary: #FF9800;
+            --danger: #f44336;
+            --bg: #f5f5f5;
+            --card: #ffffff;
+            --text: #333333;
+            --text-light: #666666;
+            --border: #e0e0e0;
+            --shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            padding-bottom: 80px;
+        }
+        
+        /* 头部 */
+        .header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            box-shadow: var(--shadow);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .header h1 {
+            font-size: 1.5rem;
+            margin-bottom: 5px;
+        }
+        
+        .age-info {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+        
+        /* 今日概览 */
+        .overview {
+            background: var(--card);
+            margin: 15px;
+            padding: 15px;
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+        }
+        
+        .overview-title {
+            font-size: 1rem;
+            color: var(--text-light);
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .date-nav {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .date-nav button {
+            background: var(--bg);
+            border: none;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            text-align: center;
+        }
+        
+        .stat-item {
+            padding: 10px;
+            background: var(--bg);
+            border-radius: 8px;
+        }
+        
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--primary);
+        }
+        
+        .stat-label {
+            font-size: 0.75rem;
+            color: var(--text-light);
+        }
+        
+        /* 标签导航 */
+        .tab-nav {
+            display: flex;
+            overflow-x: auto;
+            background: var(--card);
+            margin: 0 15px 15px;
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+            padding: 5px;
+            scrollbar-width: none;
+        }
+        
+        .tab-nav::-webkit-scrollbar {
+            display: none;
+        }
+        
+        .tab-btn {
+            flex: 1;
+            min-width: 60px;
+            padding: 10px 8px;
+            border: none;
+            background: transparent;
+            font-size: 0.85rem;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: all 0.3s;
+            white-space: nowrap;
+        }
+        
+        .tab-btn.active {
+            background: var(--primary);
+            color: white;
+        }
+        
+        /* 内容区 */
+        .content {
+            padding: 0 15px;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        /* 卡片 */
+        .card {
+            background: var(--card);
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+            margin-bottom: 15px;
+            overflow: hidden;
+        }
+        
+        .card-header {
+            padding: 15px;
+            border-bottom: 1px solid var(--border);
+            font-weight: 600;
+        }
+        
+        .card-body {
+            padding: 15px;
+        }
+        
+        /* 表单 */
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        .form-label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 0.9rem;
+            color: var(--text-light);
+        }
+        
+        .form-input, .form-select, .form-textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 1rem;
+            font-family: inherit;
+        }
+        
+        .form-input:focus, .form-select:focus, .form-textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+        
+        .form-textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+        
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        
+        /* 按钮 */
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-family: inherit;
+        }
+        
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+            width: 100%;
+        }
+        
+        .btn-primary:active {
+            background: var(--primary-dark);
+        }
+        
+        .btn-secondary {
+            background: var(--secondary);
+            color: white;
+        }
+        
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+        
+        .btn-group {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .btn-group .btn {
+            flex: 1;
+        }
+        
+        /* 记录列表 */
+        .record-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        .record-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .record-item:last-child {
+            border-bottom: none;
+        }
+        
+        .record-info {
+            flex: 1;
+        }
+        
+        .record-time {
+            font-size: 0.8rem;
+            color: var(--text-light);
+            margin-bottom: 3px;
+        }
+        
+        .record-content {
+            font-weight: 500;
+        }
+        
+        .record-note {
+            font-size: 0.8rem;
+            color: var(--text-light);
+            margin-top: 3px;
+        }
+        
+        .record-actions {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .btn-icon {
+            width: 32px;
+            height: 32px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9rem;
+        }
+        
+        .btn-edit {
+            background: var(--bg);
+            color: var(--text);
+        }
+        
+        .btn-delete {
+            background: #ffebee;
+            color: var(--danger);
+        }
+        
+        /* 空状态 */
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--text-light);
+        }
+        
+        .empty-state-icon {
+            font-size: 3rem;
+            margin-bottom: 10px;
+        }
+        
+        /* 照片上传 */
+        .photo-upload {
+            border: 2px dashed var(--border);
+            border-radius: 8px;
+            padding: 30px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .photo-upload:hover {
+            border-color: var(--primary);
+        }
+        
+        .photo-upload input {
+            display: none;
+        }
+        
+        .photo-preview {
+            max-width: 100%;
+            max-height: 200px;
+            border-radius: 8px;
+            margin-top: 10px;
+        }
+        
+        .photo-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+        }
+        
+        .photo-item {
+            aspect-ratio: 1;
+            border-radius: 8px;
+            overflow: hidden;
+            position: relative;
+            cursor: pointer;
+        }
+        
+        .photo-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .photo-caption {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(0,0,0,0.6);
+            color: white;
+            padding: 5px;
+            font-size: 0.75rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        /* 图表 */
+        .chart-container {
+            height: 250px;
+            position: relative;
+        }
+        
+        /* 快速按钮 */
+        .quick-actions {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .quick-btn {
+            padding: 15px 5px;
+            border: none;
+            border-radius: 8px;
+            background: var(--card);
+            box-shadow: var(--shadow);
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.2s;
+        }
+        
+        .quick-btn:active {
+            transform: scale(0.95);
+        }
+        
+        .quick-btn-icon {
+            font-size: 1.5rem;
+            margin-bottom: 5px;
+        }
+        
+        .quick-btn-label {
+            font-size: 0.75rem;
+            color: var(--text-light);
+        }
+        
+        /* 底部导航 */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--card);
+            box-shadow: 0 -2px 8px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-around;
+            padding: 10px 0;
+            z-index: 100;
+        }
+        
+        .nav-item {
+            flex: 1;
+            text-align: center;
+            padding: 5px;
+            cursor: pointer;
+            color: var(--text-light);
+        }
+        
+        .nav-item.active {
+            color: var(--primary);
+        }
+        
+        .nav-icon {
+            font-size: 1.3rem;
+            margin-bottom: 3px;
+        }
+        
+        .nav-label {
+            font-size: 0.7rem;
+        }
+        
+        /* 加载状态 */
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        /* 提示消息 */
+        .toast {
+            position: fixed;
+            top: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+        }
+        
+        .toast.show {
+            opacity: 1;
+        }
+        
+        /* 模态框 */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 200;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal.show {
+            display: flex;
+        }
+        
+        .modal-content {
+            background: var(--card);
+            border-radius: 12px;
+            width: 90%;
+            max-width: 400px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        
+        .modal-header {
+            padding: 15px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .modal-body {
+            padding: 15px;
+        }
+        
+        .modal-close {
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--text-light);
+        }
+        
+        /* 图片查看 */
+        .image-viewer {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.95);
+            z-index: 300;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .image-viewer.show {
+            display: flex;
+        }
+        
+        .image-viewer img {
+            max-width: 95%;
+            max-height: 95%;
+            object-fit: contain;
+        }
+        
+        .image-viewer-close {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            color: white;
+            font-size: 2rem;
+            cursor: pointer;
+        }
+        
+        /* 设置面板 */
+        .settings-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .settings-item:last-child {
+            border-bottom: none;
+        }
+        
+        /* 响应式 */
+        @media (max-width: 360px) {
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .quick-actions {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+    </style>
+</head>
+<body data-age-months="{{ age_months }}" data-age-days="{{ age_days }}" data-birth-date="{{ birth_date }}">
+    <!-- 头部 -->
+    <div class="header">
+        <h1>🍼 宝宝成长记录</h1>
+        <div class="age-info">
+            出生日期: <span id="birth-date">{{ birth_date }}</span> | 
+            今天第 <span id="age-days">{{ age_days }}</span> 天 | 
+            <span id="age-months">{{ age_months }}</span> 月龄
+        </div>
+    </div>
+    
+    <!-- 今日概览 -->
+    <div class="overview">
+        <div class="overview-title">
+            <span>📊 今日概览</span>
+            <div class="date-nav">
+                <button onclick="changeDate(-1)">‹</button>
+                <span id="current-date"></span>
+                <button onclick="changeDate(1)">›</button>
+            </div>
+        </div>
+        <div class="stats-grid">
+            <div class="stat-item">
+                <div class="stat-value" id="stat-milk">0</div>
+                <div class="stat-label">喂奶 ml</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="stat-food">0</div>
+                <div class="stat-label">辅食</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="stat-poop">0</div>
+                <div class="stat-label">排便</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="stat-sleep">0</div>
+                <div class="stat-label">睡眠 min</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 快速操作 -->
+    <div class="quick-actions">
+        <div class="quick-btn" onclick="quickAdd('milk')">
+            <div class="quick-btn-icon">🍼</div>
+            <div class="quick-btn-label">喂奶</div>
+        </div>
+        <div class="quick-btn" onclick="quickAdd('food')">
+            <div class="quick-btn-icon">🍚</div>
+            <div class="quick-btn-label">辅食</div>
+        </div>
+        <div class="quick-btn" onclick="quickAdd('poop')">
+            <div class="quick-btn-icon">💩</div>
+            <div class="quick-btn-label">排便</div>
+        </div>
+        <div class="quick-btn" onclick="quickAdd('sleep')">
+            <div class="quick-btn-icon">😴</div>
+            <div class="quick-btn-label">睡眠</div>
+        </div>
+    </div>
+    
+    <!-- 标签导航 -->
+    <div class="tab-nav">
+        <button class="tab-btn active" data-tab="milk">喂奶</button>
+        <button class="tab-btn" data-tab="food">辅食</button>
+        <button class="tab-btn" data-tab="poop">排便</button>
+        <button class="tab-btn" data-tab="sleep">睡眠</button>
+        <button class="tab-btn" data-tab="photo">照片</button>
+        <button class="tab-btn" data-tab="milestone">里程碑</button>
+        <button class="tab-btn" data-tab="growth">成长</button>
+        <button class="tab-btn" data-tab="other">其他</button>
+    </div>
+    
+    <!-- 内容区 -->
+    <div class="content">
+        <!-- 喂奶 -->
+        <div class="tab-content active" id="tab-milk">
+            <div class="card">
+                <div class="card-header">🍼 记录喂奶</div>
+                <div class="card-body">
+                    <form id="form-milk">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">时间</label>
+                                <input type="datetime-local" class="form-input" name="timestamp" id="milk-time">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">奶量 (ml)</label>
+                                <input type="number" class="form-input" name="amount_ml" placeholder="例如: 120" min="0" step="5">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">类型</label>
+                            <select class="form-select" name="type">
+                                <option value="母乳">母乳</option>
+                                <option value="配方奶">配方奶</option>
+                                <option value="混合">混合</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">备注</label>
+                            <input type="text" class="form-input" name="note" placeholder="可选">
+                        </div>
+                        <button type="submit" class="btn btn-primary">保存记录</button>
+                    </form>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-header">今日喂奶记录</div>
+                <div class="record-list" id="list-milk">
+                    <div class="empty-state">
+                        <div class="empty-state-icon">🍼</div>
+                        <div>还没有喂奶记录</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 辅食 -->
+        <div class="tab-content" id="tab-food">
+            <div class="card">
+                <div class="card-header">🍚 记录辅食</div>
+                <div class="card-body">
+                    <form id="form-food">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">时间</label>
+                                <input type="datetime-local" class="form-input" name="timestamp" id="food-time">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">食物类型</label>
+                                <input type="text" class="form-input" name="food_type" placeholder="例如: 米粉、果泥">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">食量</label>
+                            <input type="text" class="form-input" name="amount" placeholder="例如: 半碗、2勺">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">备注</label>
+                            <input type="text" class="form-input" name="note" placeholder="可选">
+                        </div>
+                        <button type="submit" class="btn btn-primary">保存记录</button>
+                    </form>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-header">今日辅食记录</div>
+                <div class="record-list" id="list-food">
+                    <div class="empty-state">
+                        <div class="empty-state-icon">🍚</div>
+                        <div>还没有辅食记录</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 排便 -->
+        <div class="tab-content" id="tab-poop">
+            <div class="card">
+                <div class="card-header">💩 记录排便</div>
+                <div class="card-body">
+                    <form id="form-poop">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">时间</label>
+                                <input type="datetime-local" class="form-input" name="timestamp" id="poop-time">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">形状</label>
+                                <select class="form-select" name="type">
+                                    <option value="正常">正常</option>
+                                    <option value="稀便">稀便</option>
+                                    <option value="硬便">硬便</option>
+                                    <option value="水样">水样</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">颜色</label>
+                            <select class="form-select" name="color">
+                                <option value="黄色">黄色</option>
+                                <option value="黄绿色">黄绿色</option>
+                                <option value="绿色">绿色</option>
+                                <option value="褐色">褐色</option>
+                                <option value="其他">其他</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">备注</label>
+                            <input type="text" class="form-input" name="note" placeholder="可选">
+                        </div>
+                        <button type="submit" class="btn btn-primary">保存记录</button>
+                    </form>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-header">今日排便记录</div>
+                <div class="record-list" id="list-poop">
+                    <div class="empty-state">
+                        <div class="empty-state-icon">💩</div>
+                        <div>还没有排便记录</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 睡眠 -->
+        <div class="tab-content" id="tab-sleep">
+            <div class="card">
+                <div class="card-header">😴 记录睡眠</div>
+                <div class="card-body">
+                    <form id="form-sleep">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">开始时间</label>
+                                <input type="datetime-local" class="form-input" name="start_time" id="sleep-start">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">结束时间</label>
+                                <input type="datetime-local" class="form-input" name="end_time" id="sleep-end" onchange="calcSleepDuration()">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">时长 (分钟)</label>
+                            <input type="number" class="form-input" name="duration_min" id="sleep-duration" placeholder="自动计算">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">备注</label>
+                            <input type="text" class="form-input" name="note" placeholder="可选">
+                        </div>
+                        <button type="submit" class="btn btn-primary">保存记录</button>
+                    </form>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-header">今日睡眠记录</div>
+                <div class="record-list" id="list-sleep">
+                    <div class="empty-state">
+                        <div class="empty-state-icon">😴</div>
+                        <div>还没有睡眠记录</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 照片 -->
+        <div class="tab-content" id="tab-photo">
+            <div class="card">
+                <div class="card-header">📸 上传照片</div>
+                <div class="card-body">
+                    <form id="form-photo" enctype="multipart/form-data">
+                        <div class="photo-upload" onclick="document.getElementById('photo-file').click()">
+                            <input type="file" id="photo-file" name="photo" accept="image/*" onchange="previewPhoto(this)">
+                            <div style="font-size: 2rem; margin-bottom: 10px;">📷</div>
+                            <div>点击选择照片</div>
+                            <div style="font-size: 0.8rem; color: var(--text-light); margin-top: 5px;">或拖拽到此处</div>
+                        </div>
+                        <img id="photo-preview" class="photo-preview" style="display: none;">
+                        <div class="form-group" style="margin-top: 15px;">
+                            <label class="form-label">描述</label>
+                            <input type="text" class="form-input" name="caption" placeholder="可选，如: 第一次翻身">
+                        </div>
+                        <button type="submit" class="btn btn-primary">上传照片</button>
+                    </form>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-header">照片记录</div>
+                <div class="card-body">
+                    <div class="photo-grid" id="photo-grid">
+                        <div class="empty-state" style="grid-column: 1 / -1;">
+                            <div class="empty-state-icon">📸</div>
+                            <div>还没有照片</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 里程碑 -->
+        <div class="tab-content" id="tab-milestone">
+            <div class="card">
+                <div class="card-header">🎯 记录里程碑</div>
+                <div class="card-body">
+                    <form id="form-milestone">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">日期</label>
+                                <input type="date" class="form-input" name="date" id="milestone-date">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">类别</label>
+                                <select class="form-select" name="category">
+                                    <option value="大运动">大运动</option>
+                                    <option value="精细动作">精细动作</option>
+                                    <option value="语言">语言</option>
+                                    <option value="认知">认知</option>
+                                    <option value="社交">社交</option>
+                                    <option value="其他">其他</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">描述</label>
+                            <textarea class="form-textarea" name="description" placeholder="例如: 第一次翻身、第一次叫妈妈..."></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary">保存里程碑</button>
+                    </form>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-header">成长里程碑</div>
+                <div class="record-list" id="list-milestone">
+                    <div class="empty-state">
+                        <div class="empty-state-icon">🎯</div>
+                        <div>还没有里程碑记录</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 成长 -->
+        <div class="tab-content" id="tab-growth">
+            <div class="card">
+                <div class="card-header">📏 记录成长测量</div>
+                <div class="card-body">
+                    <form id="form-growth">
+                        <div class="form-group">
+                            <label class="form-label">测量日期</label>
+                            <input type="date" class="form-input" name="date" id="growth-date">
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">体重 (kg)</label>
+                                <input type="number" class="form-input" name="weight_kg" placeholder="例如: 7.5" step="0.01">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">身高 (cm)</label>
+                                <input type="number" class="form-input" name="height_cm" placeholder="例如: 68" step="0.1">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">头围 (cm)</label>
+                            <input type="number" class="form-input" name="head_cm" placeholder="例如: 42" step="0.1">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">备注</label>
+                            <input type="text" class="form-input" name="note" placeholder="可选">
+                        </div>
+                        <button type="submit" class="btn btn-primary">保存测量</button>
+                    </form>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-header">成长曲线</div>
+                <div class="card-body">
+                    <div class="form-row" style="margin-bottom: 15px;">
+                        <select class="form-select" id="growth-chart-type" onchange="renderGrowthChart()">
+                            <option value="weight">体重曲线</option>
+                            <option value="height">身高曲线</option>
+                        </select>
+                    </div>
+                    <div class="chart-container" id="growth-chart">
+                        <canvas id="chart-canvas"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-header">历史测量记录</div>
+                <div class="record-list" id="list-growth">
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📏</div>
+                        <div>还没有测量记录</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 其他 -->
+        <div class="tab-content" id="tab-other">
+            <div class="card">
+                <div class="card-header">📝 其他记录</div>
+                <div class="card-body">
+                    <form id="form-other">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">时间</label>
+                                <input type="datetime-local" class="form-input" name="timestamp" id="other-time">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">类别</label>
+                                <input type="text" class="form-input" name="category" placeholder="例如: 体温、疫苗">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">内容</label>
+                            <textarea class="form-textarea" name="content" placeholder="记录具体内容..."></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary">保存记录</button>
+                    </form>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-header">其他记录</div>
+                <div class="record-list" id="list-other">
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📝</div>
+                        <div>还没有其他记录</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 底部导航 -->
+    <div class="bottom-nav">
+        <div class="nav-item active" onclick="switchTab('milk')">
+            <div class="nav-icon">🍼</div>
+            <div class="nav-label">喂奶</div>
+        </div>
+        <div class="nav-item" onclick="switchTab('photo')">
+            <div class="nav-icon">📸</div>
+            <div class="nav-label">照片</div>
+        </div>
+        <div class="nav-item" onclick="openSettings()">
+            <div class="nav-icon">⚙️</div>
+            <div class="nav-label">设置</div>
+        </div>
+    </div>
+    
+    <!-- 设置模态框 -->
+    <div class="modal" id="settings-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>设置</h3>
+                <span class="modal-close" onclick="closeSettings()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="settings-item">
+                    <span>出生日期</span>
+                    <input type="date" class="form-input" id="setting-birth-date" value="{{ birth_date }}" style="width: auto;">
+                </div>
+                <div class="settings-item">
+                    <span>数据同步</span>
+                    <button class="btn btn-secondary" onclick="refreshData()">立即刷新</button>
+                </div>
+                <div style="padding: 15px;">
+                    <button class="btn btn-primary" onclick="saveSettings()">保存设置</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 图片查看器 -->
+    <div class="image-viewer" id="image-viewer" onclick="closeImageViewer()">
+        <span class="image-viewer-close">&times;</span>
+        <img id="viewer-img" src="" alt="">
+    </div>
+    
+    <!-- Toast 提示 -->
+    <div class="toast" id="toast"></div>
+    
+    <script>
+        // ========== 全局状态 ==========
+        let currentData = {};
+        let currentDate = new Date();
+        
+        // ========== 工具函数 ==========
+        function getTodayStr() {
+            const n = new Date();
+            return `${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,'0')}-${String(n.getDate()).padStart(2,'0')}`;
+        }
+        
+        function getNowStr() {
+            const n = new Date();
+            const dateStr = `${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,'0')}-${String(n.getDate()).padStart(2,'0')}`;
+            const timeStr = `${String(n.getHours()).padStart(2,'0')}:${String(n.getMinutes()).padStart(2,'0')}`;
+            return `${dateStr}T${timeStr}`;
+        }
+        
+        function formatDateTime(str) {
+            if (!str) return '';
+            const d = new Date(str);
+            if (isNaN(d)) return str;
+            return `${d.getMonth()+1}月${d.getDate()}日 ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+        }
+        
+        function formatDate(str) {
+            if (!str) return '';
+            const parts = str.split('-');
+            if (parts.length === 3) {
+                return `${parts[1]}月${parts[2]}日`;
+            }
+            return str;
+        }
+        
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            toast.textContent = msg;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 2000);
+        }
+        
+        function setDatetimeInputDefaults() {
+            const now = getNowStr();
+            document.getElementById('milk-time').value = now;
+            document.getElementById('food-time').value = now;
+            document.getElementById('poop-time').value = now;
+            document.getElementById('sleep-start').value = now;
+            document.getElementById('other-time').value = now;
+            
+            const today = getTodayStr();
+            document.getElementById('milestone-date').value = today;
+            document.getElementById('growth-date').value = today;
+        }
+        
+        function calcSleepDuration() {
+            const start = document.getElementById('sleep-start').value;
+            const end = document.getElementById('sleep-end').value;
+            if (start && end) {
+                const startTime = new Date(start);
+                const endTime = new Date(end);
+                const diff = Math.floor((endTime - startTime) / 60000);
+                if (diff > 0) {
+                    document.getElementById('sleep-duration').value = diff;
+                }
+            }
+        }
+        
+        // ========== 标签切换 ==========
+        function switchTab(tabName) {
+            // 更新标签按钮
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.tab === tabName);
+            });
+            
+            // 更新内容区
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            document.getElementById(`tab-${tabName}`).classList.add('active');
+            
+            // 更新底部导航
+            document.querySelectorAll('.nav-item').forEach((item, idx) => {
+                item.classList.remove('active');
+            });
+            
+            // 刷新数据
+            if (currentData[tabName]) {
+                renderRecords(tabName, currentData[tabName]);
+            }
+        }
+        
+        function quickAdd(type) {
+            switchTab(type);
+            showToast(`请填写${type === 'milk' ? '喂奶' : type === 'food' ? '辅食' : type === 'poop' ? '排便' : '睡眠'}信息`);
+        }
+        
+        // ========== 数据操作 ==========
+        async function fetchData() {
+            try {
+                const res = await fetch('/api/data');
+                if (!res.ok) throw new Error('获取数据失败');
+                currentData = await res.json();
+                
+                // 渲染各类型记录
+                Object.keys(currentData).forEach(key => {
+                    if (key === 'who' || key === 'age_days' || key === 'age_months' || key === 'today') return;
+                    
+                    if (key === 'photo') {
+                        renderPhotoGrid(currentData[key]);
+                    } else {
+                        renderRecords(key, currentData[key]);
+                    }
+                });
+                
+                // 更新统计
+                updateStats();
+                
+                // 渲染成长图表
+                renderGrowthChart();
+            } catch (err) {
+                console.error('获取数据错误:', err);
+                showToast('获取数据失败');
+            }
+        }
+        
+        async function fetchStats() {
+            try {
+                const res = await fetch('/api/stats');
+                if (!res.ok) throw new Error('获取统计失败');
+                const stats = await res.json();
+                updateStatDisplay(stats);
+            } catch (err) {
+                console.error('获取统计错误:', err);
+            }
+        }
+        
+        function updateStats() {
+            fetchStats();
+        }
+        
+        function updateStatDisplay(stats) {
+            document.getElementById('stat-milk').textContent = stats.milk_total || 0;
+            document.getElementById('stat-food').textContent = stats.food_count || 0;
+            document.getElementById('stat-poop').textContent = stats.poop_count || 0;
+            document.getElementById('stat-sleep').textContent = stats.sleep_total || 0;
+        }
+        
+        function renderRecords(type, records) {
+            const container = document.getElementById(`list-${type}`);
+            if (!records || records.length === 0) {
+                const emptyIcons = {
+                    milk: '🍼', food: '🍚', poop: '💩', sleep: '😴',
+                    photo: '📸', milestone: '🎯', growth: '📏', other: '📝'
+                };
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">${emptyIcons[type] || '📝'}</div>
+                        <div>还没有记录</div>
+                    </div>
+                `;
+                return;
+            }
+            
+            // 按时间倒序
+            const sorted = [...records].reverse();
+            
+            let html = '';
+            sorted.forEach((record, idx) => {
+                const originalIdx = records.length - idx + 1; // +1 因为表头占第1行
+                html += renderRecordItem(type, record, originalIdx);
+            });
+            
+            container.innerHTML = html;
+        }
+        
+        function renderRecordItem(type, record, rowIdx) {
+            let time = '', content = '', note = '';
+            
+            switch (type) {
+                case 'milk':
+                    time = formatDateTime(record.timestamp);
+                    content = `${record.amount_ml}ml ${record.type || ''}`;
+                    note = record.note || '';
+                    break;
+                case 'food':
+                    time = formatDateTime(record.timestamp);
+                    content = record.food_type || '';
+                    note = record.amount || '';
+                    break;
+                case 'poop':
+                    time = formatDateTime(record.timestamp);
+                    content = `${record.type || ''} ${record.color || ''}`;
+                    note = record.note || '';
+                    break;
+                case 'sleep':
+                    time = `${formatDateTime(record.start_time)} - ${formatDateTime(record.end_time)}`;
+                    content = `${record.duration_min || 0} 分钟`;
+                    note = record.note || '';
+                    break;
+                case 'milestone':
+                    time = formatDate(record.date);
+                    content = `[${record.category || ''}] ${record.description || ''}`;
+                    break;
+                case 'growth':
+                    time = formatDate(record.date);
+                    content = [];
+                    if (record.weight_kg) content.push(`体重 ${record.weight_kg}kg`);
+                    if (record.height_cm) content.push(`身高 ${record.height_cm}cm`);
+                    if (record.head_cm) content.push(`头围 ${record.head_cm}cm`);
+                    content = content.join(' | ');
+                    note = record.note || '';
+                    break;
+                case 'other':
+                    time = formatDateTime(record.timestamp);
+                    content = `[${record.category || ''}] ${record.content || ''}`;
+                    break;
+            }
+            
+            return `
+                <div class="record-item">
+                    <div class="record-info">
+                        <div class="record-time">${time}</div>
+                        <div class="record-content">${content}</div>
+                        ${note ? `<div class="record-note">${note}</div>` : ''}
+                    </div>
+                    <div class="record-actions">
+                        <button class="btn-icon btn-edit" onclick="editRecord('${type}', ${rowIdx})">✏️</button>
+                        <button class="btn-icon btn-delete" onclick="deleteRecord('${type}', ${rowIdx})">🗑️</button>
+                    </div>
+                </div>
+            `;
+        }
+        
+        function renderPhotoGrid(records) {
+            const container = document.getElementById('photo-grid');
+            if (!records || records.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state" style="grid-column: 1 / -1;">
+                        <div class="empty-state-icon">📸</div>
+                        <div>还没有照片</div>
+                    </div>
+                `;
+                return;
+            }
+            
+            const sorted = [...records].reverse();
+            container.innerHTML = sorted.map(record => `
+                <div class="photo-item" onclick="viewImage('${record.drive_url}')">
+                    <img src="${record.drive_url}" alt="" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22100%22 height=%22100%22><text x=%2250%22 y=%2250%22 text-anchor=%22middle%22>📷</text></svg>'">
+                    ${record.caption ? `<div class="photo-caption">${record.caption}</div>` : ''}
+                </div>
+            `).join('');
+        }
+        
+        // ========== 表单提交 ==========
+        async function handleSubmit(type, formData) {
+            try {
+                const res = await fetch('/api/add', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ type, ...formData })
+                });
+                
+                if (!res.ok) throw new Error('保存失败');
+                
+                showToast('保存成功');
+                fetchData(); // 刷新数据
+                return true;
+            } catch (err) {
+                console.error('保存错误:', err);
+                showToast('保存失败');
+                return false;
+            }
+        }
+        
+        // 绑定表单提交
+        document.getElementById('form-milk').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = Object.fromEntries(new FormData(e.target));
+            // 转换 datetime-local 格式
+            if (formData.timestamp) {
+                formData.timestamp = formData.timestamp.replace('T', ' ');
+            }
+            // 将 milk_type 改为 type 字段存储
+            if (formData.type) {
+                formData.milk_type = formData.type;
+                delete formData.type;
+            }
+            if (await handleSubmit('milk', formData)) {
+                e.target.reset();
+                document.getElementById('milk-time').value = getNowStr();
+            }
+        });
+        
+        document.getElementById('form-food').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = Object.fromEntries(new FormData(e.target));
+            if (formData.timestamp) {
+                formData.timestamp = formData.timestamp.replace('T', ' ');
+            }
+            if (await handleSubmit('food', formData)) {
+                e.target.reset();
+                document.getElementById('food-time').value = getNowStr();
+            }
+        });
+        
+        document.getElementById('form-poop').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = Object.fromEntries(new FormData(e.target));
+            if (formData.timestamp) {
+                formData.timestamp = formData.timestamp.replace('T', ' ');
+            }
+            // 将 poop_type 改为 type 字段存储
+            if (formData.type) {
+                formData.poop_type = formData.type;
+                delete formData.type;
+            }
+            if (await handleSubmit('poop', formData)) {
+                e.target.reset();
+                document.getElementById('poop-time').value = getNowStr();
+            }
+        });
+        
+        document.getElementById('form-sleep').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = Object.fromEntries(new FormData(e.target));
+            if (formData.start_time) {
+                formData.start_time = formData.start_time.replace('T', ' ');
+            }
+            if (formData.end_time) {
+                formData.end_time = formData.end_time.replace('T', ' ');
+            }
+            if (await handleSubmit('sleep', formData)) {
+                e.target.reset();
+                document.getElementById('sleep-start').value = getNowStr();
+                document.getElementById('sleep-end').value = '';
+                document.getElementById('sleep-duration').value = '';
+            }
+        });
+        
+        document.getElementById('form-milestone').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = Object.fromEntries(new FormData(e.target));
+            if (await handleSubmit('milestone', formData)) {
+                e.target.reset();
+                document.getElementById('milestone-date').value = getTodayStr();
+            }
+        });
+        
+        document.getElementById('form-growth').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = Object.fromEntries(new FormData(e.target));
+            if (await handleSubmit('growth', formData)) {
+                e.target.reset();
+                document.getElementById('growth-date').value = getTodayStr();
+            }
+        });
+        
+        document.getElementById('form-other').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = Object.fromEntries(new FormData(e.target));
+            if (formData.timestamp) {
+                formData.timestamp = formData.timestamp.replace('T', ' ');
+            }
+            if (await handleSubmit('other', formData)) {
+                e.target.reset();
+                document.getElementById('other-time').value = getNowStr();
+            }
+        });
+        
+        // ========== 照片上传 ==========
+        function previewPhoto(input) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const preview = document.getElementById('photo-preview');
+                    preview.src = e.target.result;
+                    preview.style.display = 'block';
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+        
+        document.getElementById('form-photo').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            
+            try {
+                const res = await fetch('/api/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                if (!res.ok) throw new Error('上传失败');
+                
+                showToast('上传成功');
+                e.target.reset();
+                document.getElementById('photo-preview').style.display = 'none';
+                fetchData();
+            } catch (err) {
+                console.error('上传错误:', err);
+                showToast('上传失败');
+            }
+        });
+        
+        function viewImage(url) {
+            const viewer = document.getElementById('image-viewer');
+            document.getElementById('viewer-img').src = url;
+            viewer.classList.add('show');
+        }
+        
+        function closeImageViewer() {
+            document.getElementById('image-viewer').classList.remove('show');
+        }
+        
+        // ========== 记录编辑/删除 ==========
+        async function editRecord(type, rowIdx) {
+            // 简化实现：提示用户重新填写并删除旧记录
+            const confirmEdit = confirm('编辑将删除旧记录并创建新记录，是否继续？');
+            if (!confirmEdit) return;
+            
+            // 删除旧记录
+            await deleteRecord(type, rowIdx, false);
+            
+            // 切换到对应标签页
+            switchTab(type);
+            
+            showToast('请重新填写记录');
+        }
+        
+        async function deleteRecord(type, rowIdx, confirm = true) {
+            if (confirm && !confirm('确定要删除这条记录吗？')) return;
+            
+            try {
+                const res = await fetch('/api/delete', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ type, row_idx: rowIdx })
+                });
+                
+                if (!res.ok) throw new Error('删除失败');
+                
+                showToast('删除成功');
+                fetchData();
+            } catch (err) {
+                console.error('删除错误:', err);
+                showToast('删除失败');
+            }
+        }
+        
+        // ========== 成长图表 ==========
+        function renderGrowthChart() {
+            const chartType = document.getElementById('growth-chart-type').value;
+            const canvas = document.getElementById('chart-canvas');
+            const container = document.getElementById('growth-chart');
+            
+            // 获取成长数据
+            const growthData = currentData.growth || [];
+            if (growthData.length === 0) {
+                container.innerHTML = '<div class="empty-state" style="height: 200px;"><div>还没有测量数据</div></div>';
+                return;
+            }
+            
+            // 使用简单的 Canvas 绘制
+            const width = container.offsetWidth;
+            const height = 250;
+            
+            canvas.width = width;
+            canvas.height = height;
+            
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, width, height);
+            
+            // 准备数据点
+            const points = growthData.map(r => {
+                const date = new Date(r.date);
+                const birthDate = new Date('{{ birth_date }}');
+                const months = (date - birthDate) / (1000 * 60 * 60 * 24 * 30);
+                const value = parseFloat(chartType === 'weight' ? r.weight_kg : r.height_cm);
+                return { months, value, date: r.date };
+            }).filter(p => !isNaN(p.value) && p.value > 0);
+            
+            if (points.length === 0) {
+                ctx.fillStyle = '#999';
+                ctx.font = '14px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText('数据不足', width / 2, height / 2);
+                return;
+            }
+            
+            // 计算范围
+            const ageMonths = parseInt(document.body.dataset.ageMonths || '0');
+            const maxMonth = Math.max(...points.map(p => p.months), ageMonths);
+            const values = points.map(p => p.value);
+            const minValue = Math.min(...values) * 0.9;
+            const maxValue = Math.max(...values) * 1.1;
+            
+            const padding = { left: 40, right: 20, top: 20, bottom: 30 };
+            const chartWidth = width - padding.left - padding.right;
+            const chartHeight = height - padding.top - padding.bottom;
+            
+            // 绘制网格
+            ctx.strokeStyle = '#e0e0e0';
+            ctx.lineWidth = 1;
+            
+            // 横向网格线
+            for (let i = 0; i <= 5; i++) {
+                const y = padding.top + (chartHeight / 5) * i;
+                ctx.beginPath();
+                ctx.moveTo(padding.left, y);
+                ctx.lineTo(width - padding.right, y);
+                ctx.stroke();
+                
+                // Y轴标签
+                const value = maxValue - (maxValue - minValue) * (i / 5);
+                ctx.fillStyle = '#666';
+                ctx.font = '10px sans-serif';
+                ctx.textAlign = 'right';
+                ctx.fillText(value.toFixed(1), padding.left - 5, y + 3);
+            }
+            
+            // 纵向网格线
+            for (let i = 0; i <= Math.ceil(maxMonth); i += Math.ceil(maxMonth / 6) || 1) {
+                const x = padding.left + (i / maxMonth) * chartWidth;
+                ctx.beginPath();
+                ctx.moveTo(x, padding.top);
+                ctx.lineTo(x, height - padding.bottom);
+                ctx.stroke();
+                
+                // X轴标签
+                ctx.fillStyle = '#666';
+                ctx.font = '10px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText(i + '月', x, height - 10);
+            }
+            
+            // 绘制数据线
+            ctx.strokeStyle = '#4CAF50';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            
+            points.forEach((p, i) => {
+                const x = padding.left + (p.months / maxMonth) * chartWidth;
+                const y = padding.top + chartHeight - ((p.value - minValue) / (maxValue - minValue)) * chartHeight;
+                
+                if (i === 0) {
+                    ctx.moveTo(x, y);
+                } else {
+                    ctx.lineTo(x, y);
+                }
+            });
+            ctx.stroke();
+            
+            // 绘制数据点
+            points.forEach(p => {
+                const x = padding.left + (p.months / maxMonth) * chartWidth;
+                const y = padding.top + chartHeight - ((p.value - minValue) / (maxValue - minValue)) * chartHeight;
+                
+                ctx.fillStyle = '#4CAF50';
+                ctx.beginPath();
+                ctx.arc(x, y, 4, 0, Math.PI * 2);
+                ctx.fill();
+            });
+        }
+        
+        // ========== 日期导航 ==========
+        function changeDate(days) {
+            currentDate.setDate(currentDate.getDate() + days);
+            updateDateDisplay();
+            // 这里可以实现按日期筛选数据的功能
+        }
+        
+        function updateDateDisplay() {
+            const year = currentDate.getFullYear();
+            const month = String(currentDate.getMonth() + 1).padStart(2, '0');
+            const day = String(currentDate.getDate()).padStart(2, '0');
+            document.getElementById('current-date').textContent = `${month}-${day}`;
+        }
+        
+        // ========== 设置 ==========
+        function openSettings() {
+            document.getElementById('settings-modal').classList.add('show');
+        }
+        
+        function closeSettings() {
+            document.getElementById('settings-modal').classList.remove('show');
+        }
+        
+        function refreshData() {
+            fetchData();
+            showToast('数据已刷新');
+        }
+        
+        function saveSettings() {
+            // 保存出生日期等设置
+            const birthDate = document.getElementById('setting-birth-date').value;
+            localStorage.setItem('birthDate', birthDate);
+            showToast('设置已保存');
+            closeSettings();
+        }
+        
+        // ========== 初始化 ==========
+        document.addEventListener('DOMContentLoaded', () => {
+            setDatetimeInputDefaults();
+            updateDateDisplay();
+            fetchData();
+            
+            // 从 localStorage 恢复设置
+            const savedBirthDate = localStorage.getItem('birthDate');
+            if (savedBirthDate) {
+                document.getElementById('setting-birth-date').value = savedBirthDate;
+            }
+            
+            // 绑定标签切换
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    switchTab(btn.dataset.tab);
+                });
+            });
+        });
+        
+        // 窗口大小改变时重绘图表
+        window.addEventListener('resize', () => {
+            renderGrowthChart();
+        });
+    </script>
+</body>
+</html>
