@@ -1,6 +1,7 @@
 import os
 import json
 import re
+import time
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 from functools import wraps
@@ -135,8 +136,20 @@ def ensure_worksheet(sh, name, headers):
     return ws
 
 
+# 全局缓存
+_spreadsheet_cache = None
+_cache_timestamp = 0
+CACHE_TTL = 300  # 5分钟缓存
+
 def init_spreadsheet():
-    """初始化电子表格结构"""
+    """初始化电子表格结构（带缓存）"""
+    global _spreadsheet_cache, _cache_timestamp
+    
+    # 检查缓存
+    current_time = time.time()
+    if _spreadsheet_cache and (current_time - _cache_timestamp) < CACHE_TTL:
+        return _spreadsheet_cache
+    
     client = get_sheets_client()
     if not client:
         print('错误: 无法创建 Sheets 客户端，请检查 GOOGLE_SERVICE_ACCOUNT_JSON')
@@ -154,7 +167,6 @@ def init_spreadsheet():
         # 确保 Sheet1 是成长记录表
         try:
             ws = sh.worksheet('Sheet1')
-            # 检查是否已有表头
             first_row = ws.row_values(1)
             if not first_row:
                 ws.append_row(SHEET_HEADERS['growth'])
@@ -168,6 +180,10 @@ def init_spreadsheet():
                     ensure_worksheet(sh, name, headers)
                 except Exception as e:
                     print(f'创建工作表 {name} 错误: {e}')
+        
+        # 更新缓存
+        _spreadsheet_cache = sh
+        _cache_timestamp = current_time
         
         return sh
     except Exception as e:
