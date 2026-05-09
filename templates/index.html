@@ -565,19 +565,38 @@
         
         .timeline-title {
             font-weight: 600;
-            font-size: 0.9rem;
+            font-size: 1.05rem;
             margin-bottom: 2px;
         }
-        
+
         .timeline-desc {
-            font-size: 0.8rem;
+            font-size: 0.95rem;
             color: var(--text-light);
         }
-        
+
         .timeline-time {
-            font-size: 0.75rem;
+            font-size: 0.95rem;
             color: var(--text-light);
             white-space: nowrap;
+        }
+
+        .timeline-meta {
+            font-size: 0.9rem;
+            color: var(--text-light);
+            margin-top: 2px;
+        }
+
+        .timeline-delete {
+            font-size: 0.85rem;
+            color: #FF6B6B;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 4px;
+            transition: background 0.2s;
+        }
+
+        .timeline-delete:hover {
+            background: #FFE5E5;
         }
         
         /* 统计卡片 */
@@ -781,7 +800,7 @@
             right: 0;
             bottom: 0;
             background: rgba(0, 0, 0, 0.4);
-            z-index: 2000;
+            z-index: 2500;
             display: none;
             align-items: flex-end;
             justify-content: center;
@@ -1510,6 +1529,7 @@
             <div class="nav-label">日历</div>
         </div>
         <div class="nav-item" onclick="switchPage('growth')">
+            <div class="nav-icon">📈</div>
             <div class="nav-label">成长</div>
         </div>
     </div>
@@ -1881,24 +1901,39 @@
             }
             
             let html = '';
-            todayRecords.forEach(record => {
+            todayRecords.forEach((record, index) => {
                 const config = typeConfig[record.type];
-                const time = record.timestamp?.split(' ')[1]?.substring(0, 5) || 
+                const time = record.timestamp?.split(' ')[1]?.substring(0, 5) ||
                            record.start_time?.split(' ')[1]?.substring(0, 5) || '';
-                
+
                 let desc = '';
-                if (record.type === 'milk') desc = `${record.amount_ml}ml`;
-                else if (record.type === 'sleep') desc = `睡了 ${record.duration_min} 分钟`;
-                else if (record.type === 'poop') desc = record.poop_type || '排便';
-                else if (record.type === 'food') desc = record.food_type || '辅食';
-                
+                let meta = '';
+                if (record.type === 'milk') {
+                    desc = `${record.amount_ml}ml`;
+                    meta = `奶粉 | ${time}`;
+                }
+                else if (record.type === 'sleep') {
+                    desc = `睡了 ${record.duration_min} 分钟`;
+                    const endTime = record.end_time?.split(' ')[1]?.substring(0, 5) || '';
+                    meta = `${time} - ${endTime}`;
+                }
+                else if (record.type === 'poop') {
+                    desc = record.poop_type || '排便';
+                    meta = `${record.color || ''} | ${time}`;
+                }
+                else if (record.type === 'food') {
+                    desc = record.food_type || '辅食';
+                    meta = `${record.amount || ''} | ${time}`;
+                }
+
                 html += `
                     <div class="timeline-item">
                         <div class="timeline-icon ${config.color}">${config.icon}</div>
                         <div class="timeline-content">
                             <div class="timeline-title">${config.name} ${desc}</div>
-                            <div class="timeline-time">${time}</div>
+                            <div class="timeline-meta">${meta}</div>
                         </div>
+                        <div class="timeline-delete" onclick="deleteRecord('${record.type}', ${index}, event)">删除</div>
                     </div>
                 `;
             });
@@ -2206,10 +2241,67 @@
                         <label class="form-label">描述</label>
                         <textarea class="form-input" id="milestone-desc" rows="3" placeholder="记录重要时刻..."></textarea>
                     </div>
+                    <div class="form-group">
+                        <label class="form-label">照片</label>
+                        <input type="file" class="form-input" id="milestone-photo" accept="image/*" capture="environment">
+                    </div>
                     <button class="btn btn-primary btn-full" onclick="submitMilestone()">保存</button>
                 `;
+            } else if (type === 'photo') {
+                formHtml = `
+                    <div class="form-group">
+                        <label class="form-label">日期</label>
+                        <div class="date-picker-btn" onclick="selectDateForInput('photo')">
+                            <span id="photo-date-display">${today}</span>
+                            <input type="hidden" id="photo-date" value="${today}">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">时间</label>
+                        <div class="date-picker-btn" onclick="selectTimeForInput('photo')">
+                            <span id="photo-time-display">${currentTime}</span>
+                            <input type="hidden" id="photo-time" value="${currentTime}">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">照片</label>
+                        <input type="file" class="form-input" id="photo-file" accept="image/*" capture="environment">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">说明</label>
+                        <input type="text" class="form-input" id="photo-caption" placeholder="添加照片说明...">
+                    </div>
+                    <button class="btn btn-primary btn-full" onclick="submitPhoto()">保存</button>
+                `;
+            } else if (type === 'growth') {
+                formHtml = `
+                    <div class="form-group">
+                        <label class="form-label">日期</label>
+                        <div class="date-picker-btn" onclick="selectDateForInput('growth')">
+                            <span id="growth-date-display">${today}</span>
+                            <input type="hidden" id="growth-date" value="${today}">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">体重 (kg)</label>
+                        <input type="number" step="0.01" class="form-input" id="growth-weight" placeholder="例如: 7.5">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">身高 (cm)</label>
+                        <input type="number" step="0.1" class="form-input" id="growth-height" placeholder="例如: 65.5">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">头围 (cm)</label>
+                        <input type="number" step="0.1" class="form-input" id="growth-head" placeholder="例如: 42.0">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">备注</label>
+                        <input type="text" class="form-input" id="growth-note" placeholder="可选备注...">
+                    </div>
+                    <button class="btn btn-primary btn-full" onclick="submitGrowth()">保存</button>
+                `;
             }
-            
+
             container.innerHTML = formHtml;
             modal.classList.add('active');
         }
@@ -2330,14 +2422,14 @@
         function renderMilkChart() {
             const canvas = document.getElementById('milk-chart');
             if (!canvas || !currentData.milk) return;
-            
+
             const ctx = canvas.getContext('2d');
             const width = canvas.width;
             const height = canvas.height;
-            
+
             // 清空画布
             ctx.clearRect(0, 0, width, height);
-            
+
             // 计算最近7天的奶量
             const days = [];
             const today = new Date();
@@ -2346,7 +2438,7 @@
                 d.setDate(d.getDate() - i);
                 days.push(d);
             }
-            
+
             const dailyMilk = days.map(d => {
                 const dateStr = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
                 let total = 0;
@@ -2355,28 +2447,42 @@
                         total += parseInt(record.amount_ml) || 0;
                     }
                 });
-                return { date: d.getDate(), amount: total };
+                return { date: d.getDate(), amount: total, fullDate: `${d.getMonth()+1}/${d.getDate()}` };
             });
-            
+
             // 绘制柱状图
             const barWidth = (width - 40) / dailyMilk.length;
-            const maxAmount = Math.max(...dailyMilk.map(d => d.amount), 500);
-            
+            const maxAmount = Math.max(...dailyMilk.map(d => d.amount), 200); // 降低最小值让柱子更明显
+
             dailyMilk.forEach((d, i) => {
-                const barHeight = (d.amount / maxAmount) * (height - 60);
+                const barHeight = d.amount > 0 ? Math.max((d.amount / maxAmount) * (height - 80), 5) : 0;
                 const x = 20 + i * barWidth + barWidth * 0.2;
-                const y = height - 40 - barHeight;
-                
+                const y = height - 50 - barHeight;
+
                 // 绘制柱子
-                ctx.fillStyle = '#007AFF';
-                ctx.fillRect(x, y, barWidth * 0.6, barHeight);
-                
+                if (d.amount > 0) {
+                    ctx.fillStyle = '#007AFF';
+                    ctx.fillRect(x, y, barWidth * 0.6, barHeight);
+
+                    // 绘制数值
+                    ctx.fillStyle = '#333';
+                    ctx.font = 'bold 11px sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.fillText(`${d.amount}`, x + barWidth * 0.3, y - 5);
+                }
+
                 // 绘制日期
                 ctx.fillStyle = '#666';
                 ctx.font = '10px sans-serif';
                 ctx.textAlign = 'center';
-                ctx.fillText(`${d.date}日`, x + barWidth * 0.3, height - 20);
+                ctx.fillText(`${d.fullDate}`, x + barWidth * 0.3, height - 30);
             });
+
+            // 绘制标题
+            ctx.fillStyle = '#333';
+            ctx.font = 'bold 14px sans-serif';
+            ctx.textAlign = 'left';
+            ctx.fillText('喝奶量 (ml)', 20, 20);
         }
         
         function renderGrowthChart() {
@@ -2817,18 +2923,35 @@
             showToast('请重新填写记录');
         }
         
-        async function deleteRecord(type, rowIdx, confirm = true) {
-            if (confirm && !confirm('确定要删除这条记录吗？')) return;
-            
+        async function deleteRecord(type, rowIdx, event = null) {
+            if (event) event.stopPropagation();
+            if (!confirm('确定要删除这条记录吗？')) return;
+
             try {
+                // 找到该记录在原始数组中的实际索引
+                const todayStr = currentDate;
+                const records = currentData[type] || [];
+                const todayRecords = records.filter(r => {
+                    const ts = r.timestamp || r.date || r.start_time || '';
+                    return ts.startsWith(todayStr);
+                });
+
+                const recordToDelete = todayRecords[rowIdx];
+                const originalIdx = records.indexOf(recordToDelete);
+
+                if (originalIdx === -1) {
+                    showToast('记录不存在');
+                    return;
+                }
+
                 const res = await fetch('/api/delete', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ type, row_idx: rowIdx })
+                    body: JSON.stringify({ type, row_idx: originalIdx + 2 }) // +2 for header row and 1-indexed
                 });
-                
+
                 if (!res.ok) throw new Error('删除失败');
-                
+
                 showToast('删除成功');
                 fetchData();
             } catch (err) {
@@ -3098,15 +3221,20 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(data)
                 });
-                
+
                 if (!res.ok) throw new Error('保存失败');
-                
+
                 showToast(`${typeName}记录已保存`);
                 closeInputModal();
-                
-                // 刷新数据
-                await fetchData();
-                
+
+                // 刷新数据（失败不影响已保存的提示）
+                try {
+                    await fetchData();
+                } catch (refreshErr) {
+                    console.error('刷新数据错误:', refreshErr);
+                    // 刷新失败不影响保存成功的提示
+                }
+
                 // 切换回今日页面
                 if (document.getElementById('page-today').classList.contains('active')) {
                     updateTodayStats();
@@ -3114,7 +3242,7 @@
                 }
             } catch (err) {
                 console.error('保存错误:', err);
-                showToast('保存失败');
+                showToast('保存失败: ' + err.message);
             }
         }
         
