@@ -13,6 +13,7 @@
         
         :root {
             --primary: #007AFF;
+            --primary-dark: #0056CC;
             --primary-light: #5AC8FA;
             --secondary: #34C759;
             --warning: #FF9500;
@@ -246,7 +247,11 @@
         .btn-primary {
             background: var(--primary);
             color: white;
+        }
+        
+        .btn-full {
             width: 100%;
+            margin-top: 10px;
         }
         
         .btn-primary:active {
@@ -447,138 +452,18 @@
             color: var(--text-light);
         }
         
-        /* 底部导航 */
-        .bottom-nav {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background: var(--card);
-            box-shadow: 0 -2px 8px rgba(0,0,0,0.1);
-            display: flex;
-            justify-content: space-around;
-            padding: 10px 0;
-            z-index: 100;
-        }
+        /* (Old bottom-nav and quick-actions CSS removed - replaced by iOS-style versions below) */
         
-        .nav-item {
-            flex: 1;
-            text-align: center;
-            padding: 5px;
-            cursor: pointer;
-            color: var(--text-light);
-        }
-        
-        .nav-item.active {
-            color: var(--primary);
-        }
-        
-        .nav-icon {
-            font-size: 1.3rem;
-            margin-bottom: 3px;
-        }
-        
-        .nav-label {
-            font-size: 0.7rem;
-        }
-        
-        /* 快捷操作大按钮 */
-        .quick-actions {
-            display: flex;
-            justify-content: space-around;
-            padding: 20px;
-            background: var(--card);
-            margin-bottom: 10px;
-        }
-        
-        .quick-btn {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 8px;
-            cursor: pointer;
-            transition: transform 0.2s;
-        }
-        
-        .quick-btn:active {
-            transform: scale(0.95);
-        }
-        
-        .quick-btn-icon {
-            width: 60px;
-            height: 60px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.8rem;
-            box-shadow: var(--shadow);
-        }
-        
-        .quick-btn-icon.milk { background: linear-gradient(135deg, #FFE0B2, #FFB74D); }
-        .quick-btn-icon.sleep { background: linear-gradient(135deg, #B3E5FC, #64B5F6); }
-        .quick-btn-icon.poop { background: linear-gradient(135deg, #D7CCC8, #A1887F); }
-        .quick-btn-icon.food { background: linear-gradient(135deg, #C8E6C9, #81C784); }
-        
-        .quick-btn-label {
-            font-size: 0.75rem;
-            color: var(--text-light);
-        }
-        
-        /* 时间轴记录 */
+        /* 时间轴记录 - 仅保留新UI需要的独有样式 */
         .timeline {
             padding: 0 15px;
         }
-        
-        .timeline-item {
-            display: flex;
-            align-items: flex-start;
-            padding: 12px 0;
-            border-bottom: 1px solid var(--border);
-        }
-        
-        .timeline-item:last-child {
-            border-bottom: none;
-        }
-        
-        .timeline-icon {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.2rem;
-            margin-right: 12px;
-            flex-shrink: 0;
-        }
-        
+
         .timeline-icon.milk { background: #FFF3E0; }
         .timeline-icon.sleep { background: #E3F2FD; }
         .timeline-icon.poop { background: #EFEBE9; }
         .timeline-icon.food { background: #E8F5E9; }
         .timeline-icon.milestone { background: #F3E5F5; }
-        
-        .timeline-content {
-            flex: 1;
-        }
-        
-        .timeline-title {
-            font-weight: 600;
-            font-size: 1.25rem;
-            margin-bottom: 2px;
-        }
-
-        .timeline-desc {
-            font-size: 1.15rem;
-            color: var(--text-light);
-        }
-
-        .timeline-time {
-            font-size: 1.15rem;
-            color: var(--text-light);
-            white-space: nowrap;
-        }
 
         .timeline-meta {
             font-size: 1.1rem;
@@ -599,31 +484,6 @@
             background: #FFE5E5;
         }
         
-        /* 统计卡片 */
-        .stats-bar {
-            display: flex;
-            justify-content: space-around;
-            padding: 15px;
-            background: var(--card);
-            margin-bottom: 10px;
-        }
-        
-        .stat-item {
-            text-align: center;
-        }
-        
-        .stat-value {
-            font-size: 1.4rem;
-            font-weight: 700;
-            color: var(--primary);
-        }
-        
-        .stat-label {
-            font-size: 0.9rem;
-            color: var(--text-light);
-            margin-top: 2px;
-        }
-        
         /* 提示消息 */
         .toast {
             position: fixed;
@@ -634,7 +494,7 @@
             color: white;
             padding: 12px 24px;
             border-radius: 8px;
-            z-index: 1000;
+            z-index: 5000;
             opacity: 0;
             transition: opacity 0.3s;
             pointer-events: none;
@@ -1513,9 +1373,9 @@
         <div class="chart-container">
             <div class="chart-title">🍼 喝奶统计</div>
             <div class="period-selector">
-                <div class="period-btn active" onclick="changePeriod(7)">7天</div>
-                <div class="period-btn" onclick="changePeriod(14)">14天</div>
-                <div class="period-btn" onclick="changePeriod(30)">30天</div>
+                <div class="period-btn active" onclick="changePeriod(7, event)">7天</div>
+                <div class="period-btn" onclick="changePeriod(14, event)">14天</div>
+                <div class="period-btn" onclick="changePeriod(30, event)">30天</div>
             </div>
             <canvas id="milk-chart" width="350" height="200"></canvas>
         </div>
@@ -1656,136 +1516,9 @@
             setTimeout(() => toast.classList.remove('show'), 2000);
         }
         
-        function setDatetimeInputDefaults() {
-            const now = getNowStr();
-            document.getElementById('milk-time').value = now;
-            document.getElementById('food-time').value = now;
-            document.getElementById('poop-time').value = now;
-            document.getElementById('sleep-start').value = now;
-            document.getElementById('other-time').value = now;
-            
-            const today = getTodayStr();
-            document.getElementById('milestone-date').value = today;
-            document.getElementById('growth-date').value = today;
-        }
+        // (Dead setDatetimeInputDefaults and calcSleepDuration removed - forms are now dynamic modals)
         
-        function calcSleepDuration() {
-            const start = document.getElementById('sleep-start').value;
-            const end = document.getElementById('sleep-end').value;
-            if (start && end) {
-                const startTime = new Date(start);
-                const endTime = new Date(end);
-                const diff = Math.floor((endTime - startTime) / 60000);
-                if (diff > 0) {
-                    document.getElementById('sleep-duration').value = diff;
-                }
-            }
-        }
-        
-        // ========== 标签切换 ==========
-        function switchTab(tabName) {
-            // 更新标签按钮
-            document.querySelectorAll('.tab-btn').forEach(btn => {
-                btn.classList.toggle('active', btn.dataset.tab === tabName);
-            });
-            
-            // 更新内容区
-            document.querySelectorAll('.tab-content').forEach(content => {
-                content.classList.remove('active');
-            });
-            
-            const targetTab = document.getElementById(`tab-${tabName}`);
-            if (targetTab) {
-                targetTab.classList.add('active');
-            }
-            
-            // 特殊处理概览页面
-            if (tabName === 'overview') {
-                renderTimelineAll();
-                updateOverviewStats();
-            } else if (currentData[tabName]) {
-                renderRecords(tabName, currentData[tabName]);
-            }
-        }
-        
-        // 渲染概览时间轴
-        function renderTimelineAll() {
-            const container = document.getElementById('timeline-all');
-            if (!container) return;
-            
-            // 收集所有记录
-            const allRecords = [];
-            const typeConfig = {
-                milk: { icon: '🍼', color: 'milk', name: '喂奶' },
-                food: { icon: '🍚', color: 'food', name: '辅食' },
-                poop: { icon: '💩', color: 'poop', name: '换尿布' },
-                sleep: { icon: '😴', color: 'sleep', name: '睡眠' },
-                milestone: { icon: '🎯', color: 'milestone', name: '里程碑' },
-                other: { icon: '📝', color: 'milk', name: '其他' }
-            };
-            
-            Object.keys(currentData).forEach(type => {
-                if (typeConfig[type] && Array.isArray(currentData[type])) {
-                    currentData[type].forEach(record => {
-                        allRecords.push({ type, ...record });
-                    });
-                }
-            });
-            
-            // 按时间排序（最新的在前面）
-            allRecords.sort((a, b) => {
-                const timeA = a.timestamp || a.date || a.start_time || '';
-                const timeB = b.timestamp || b.date || b.start_time || '';
-                return timeB.localeCompare(timeA);
-            });
-            
-            // 只显示今天和最近的记录
-            const today = new Date().toISOString().split('T')[0];
-            const recentRecords = allRecords.slice(0, 20);
-            
-            if (recentRecords.length === 0) {
-                container.innerHTML = `
-                    <div class="empty-state">
-                        <div class="empty-state-icon">📝</div>
-                        <div>今天还没有记录</div>
-                    </div>
-                `;
-                return;
-            }
-            
-            let html = '';
-            recentRecords.forEach(record => {
-                const config = typeConfig[record.type] || typeConfig.other;
-                const time = record.timestamp?.split(' ')[1]?.substring(0, 5) || 
-                           record.date || 
-                           record.start_time?.split(' ')[1]?.substring(0, 5) || '';
-                
-                let desc = '';
-                if (record.type === 'milk') {
-                    desc = `${record.amount_ml}ml ${record.milk_type || ''}`;
-                } else if (record.type === 'sleep') {
-                    desc = `睡了 ${record.duration_min} 分钟`;
-                } else if (record.type === 'poop') {
-                    desc = `${record.poop_type || ''} ${record.color || ''}`;
-                } else if (record.type === 'food') {
-                    desc = `${record.food_type} ${record.amount || ''}`;
-                } else if (record.type === 'milestone') {
-                    desc = record.description;
-                }
-                
-                html += `
-                    <div class="timeline-item">
-                        <div class="timeline-icon ${config.color}">${config.icon}</div>
-                        <div class="timeline-content">
-                            <div class="timeline-title">${config.name} ${desc}</div>
-                            <div class="timeline-time">${time}</div>
-                        </div>
-                    </div>
-                `;
-            });
-            
-            container.innerHTML = html;
-        }
+        // (Dead switchTab and renderTimelineAll removed - replaced by switchPage)
         
         // ========== 新页面切换 ==========
         function switchPage(pageName) {
@@ -2432,12 +2165,12 @@
         // ========== 成长页面 ==========
         let currentPeriod = 7;
         
-        function changePeriod(days) {
+        function changePeriod(days, e) {
             currentPeriod = days;
             document.querySelectorAll('.period-btn').forEach(btn => {
                 btn.classList.remove('active');
             });
-            event.target.classList.add('active');
+            if (e && e.target) e.target.classList.add('active');
             renderMilkChart();
         }
         
@@ -2509,36 +2242,94 @@
         
         function renderGrowthChart() {
             const canvas = document.getElementById('growth-chart');
-            if (!canvas || !currentData.who) return;
+            if (!canvas) return;
             
             const ctx = canvas.getContext('2d');
             const width = canvas.width;
             const height = canvas.height;
-            
             ctx.clearRect(0, 0, width, height);
             
-            // 绘制身高体重曲线
-            ctx.strokeStyle = '#34C759';
-            ctx.lineWidth = 2;
-            ctx.beginPath();
+            const growthData = currentData.growth || [];
+            if (growthData.length === 0) {
+                ctx.fillStyle = '#999';
+                ctx.font = '14px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText('还没有成长数据', width / 2, height / 2);
+                return;
+            }
             
-            // 简化的示例数据
-            const points = [
-                { month: 0, height: 50 },
-                { month: 1, height: 54 },
-                { month: 2, height: 58 },
-                { month: 3, height: 61 },
-                { month: 6, height: 67 },
-            ];
+            const birthDate = new Date(document.body.dataset.birthDate || '{{ birth_date }}');
             
-            points.forEach((p, i) => {
-                const x = 40 + (p.month / 12) * (width - 80);
-                const y = height - 40 - (p.height / 80) * (height - 80);
-                if (i === 0) ctx.moveTo(x, y);
-                else ctx.lineTo(x, y);
+            // 准备体重和身高数据点
+            const weightPoints = [];
+            const heightPoints = [];
+            growthData.forEach(r => {
+                const date = new Date(r.date);
+                const months = (date - birthDate) / (1000 * 60 * 60 * 24 * 30);
+                if (r.weight_kg && parseFloat(r.weight_kg) > 0) {
+                    weightPoints.push({ months, value: parseFloat(r.weight_kg) });
+                }
+                if (r.height_cm && parseFloat(r.height_cm) > 0) {
+                    heightPoints.push({ months, value: parseFloat(r.height_cm) });
+                }
             });
             
-            ctx.stroke();
+            const padding = { left: 45, right: 20, top: 25, bottom: 30 };
+            const chartW = width - padding.left - padding.right;
+            const chartH = height - padding.top - padding.bottom;
+            
+            // 绘制体重曲线
+            function drawLine(points, color, label) {
+                if (points.length === 0) return;
+                const maxM = Math.max(...points.map(p => p.months), 1);
+                const vals = points.map(p => p.value);
+                const minV = Math.min(...vals) * 0.9;
+                const maxV = Math.max(...vals) * 1.1;
+                
+                ctx.strokeStyle = color;
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                points.forEach((p, i) => {
+                    const x = padding.left + (p.months / maxM) * chartW;
+                    const y = padding.top + chartH - ((p.value - minV) / (maxV - minV)) * chartH;
+                    if (i === 0) ctx.moveTo(x, y);
+                    else ctx.lineTo(x, y);
+                });
+                ctx.stroke();
+                
+                // 数据点
+                points.forEach(p => {
+                    const x = padding.left + (p.months / maxM) * chartW;
+                    const y = padding.top + chartH - ((p.value - minV) / (maxV - minV)) * chartH;
+                    ctx.fillStyle = color;
+                    ctx.beginPath();
+                    ctx.arc(x, y, 3, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.fillStyle = '#333';
+                    ctx.font = '10px sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.fillText(p.value.toFixed(1), x, y - 8);
+                });
+            }
+            
+            drawLine(weightPoints, '#FF9500', '体重');
+            drawLine(heightPoints, '#34C759', '身高');
+            
+            // 图例
+            ctx.font = '11px sans-serif';
+            if (weightPoints.length > 0) {
+                ctx.fillStyle = '#FF9500';
+                ctx.fillRect(padding.left, 5, 12, 12);
+                ctx.fillStyle = '#333';
+                ctx.textAlign = 'left';
+                ctx.fillText('体重(kg)', padding.left + 16, 15);
+            }
+            if (heightPoints.length > 0) {
+                ctx.fillStyle = '#34C759';
+                ctx.fillRect(padding.left + 80, 5, 12, 12);
+                ctx.fillStyle = '#333';
+                ctx.fillText('身高(cm)', padding.left + 96, 15);
+            }
         }
         
         function renderWhoChart() {
@@ -2595,8 +2386,6 @@
                 renderMilkChart();
                 renderGrowthChart();
                 renderWhoChart();
-                
-                showToast('数据已更新');
             } catch (err) {
                 console.error('获取数据错误:', err);
                 showToast('获取数据失败');
@@ -2622,7 +2411,7 @@
             let html = '';
             todayPhotos.forEach(photo => {
                 html += `
-                    <div class="photo-item" onclick="openImageViewer('${photo.drive_url}')">
+                    <div class="photo-item" onclick="viewImage('${photo.drive_url}')">
                         <img src="${photo.drive_url}" alt="${photo.caption || ''}" loading="lazy">
                     </div>
                 `;
@@ -2630,295 +2419,9 @@
             container.innerHTML = html;
         }
         
-        async function fetchStats() {
-            try {
-                const res = await fetch('/api/stats');
-                if (!res.ok) throw new Error('获取统计失败');
-                const stats = await res.json();
-                updateStatDisplay(stats);
-            } catch (err) {
-                console.error('获取统计错误:', err);
-            }
-        }
+        // (Dead fetchStats, updateStatDisplay, renderRecords, renderRecordItem, renderPhotoGrid removed - not used by current UI)
         
-        function updateStats() {
-            fetchStats();
-        }
-        
-        function updateStatDisplay(stats) {
-            document.getElementById('stat-milk').textContent = stats.milk_total || 0;
-            document.getElementById('stat-food').textContent = stats.food_count || 0;
-            document.getElementById('stat-poop').textContent = stats.poop_count || 0;
-            document.getElementById('stat-sleep').textContent = stats.sleep_total || 0;
-        }
-        
-        function renderRecords(type, records) {
-            const container = document.getElementById(`list-${type}`);
-            if (!records || records.length === 0) {
-                const emptyIcons = {
-                    milk: '🍼', food: '🍚', poop: '💩', sleep: '😴',
-                    photo: '📸', milestone: '🎯', growth: '📏', other: '📝'
-                };
-                container.innerHTML = `
-                    <div class="empty-state">
-                        <div class="empty-state-icon">${emptyIcons[type] || '📝'}</div>
-                        <div>还没有记录</div>
-                    </div>
-                `;
-                return;
-            }
-            
-            // 按时间倒序
-            const sorted = [...records].reverse();
-            
-            let html = '';
-            sorted.forEach((record, idx) => {
-                const originalIdx = records.length - idx + 1; // +1 因为表头占第1行
-                html += renderRecordItem(type, record, originalIdx);
-            });
-            
-            container.innerHTML = html;
-        }
-        
-        function renderRecordItem(type, record, rowIdx) {
-            let time = '', content = '', note = '';
-            
-            switch (type) {
-                case 'milk':
-                    time = formatDateTime(record.timestamp);
-                    content = `${record.amount_ml}ml ${record.type || ''}`;
-                    note = record.note || '';
-                    break;
-                case 'food':
-                    time = formatDateTime(record.timestamp);
-                    content = record.food_type || '';
-                    note = record.amount || '';
-                    break;
-                case 'poop':
-                    time = formatDateTime(record.timestamp);
-                    content = `${record.type || ''} ${record.color || ''}`;
-                    note = record.note || '';
-                    break;
-                case 'sleep':
-                    time = `${formatDateTime(record.start_time)} - ${formatDateTime(record.end_time)}`;
-                    content = `${record.duration_min || 0} 分钟`;
-                    note = record.note || '';
-                    break;
-                case 'milestone':
-                    time = formatDate(record.date);
-                    content = `[${record.category || ''}] ${record.description || ''}`;
-                    break;
-                case 'growth':
-                    time = formatDate(record.date);
-                    content = [];
-                    if (record.weight_kg) content.push(`体重 ${record.weight_kg}kg`);
-                    if (record.height_cm) content.push(`身高 ${record.height_cm}cm`);
-                    if (record.head_cm) content.push(`头围 ${record.head_cm}cm`);
-                    content = content.join(' | ');
-                    note = record.note || '';
-                    break;
-                case 'other':
-                    time = formatDateTime(record.timestamp);
-                    content = `[${record.category || ''}] ${record.content || ''}`;
-                    break;
-            }
-            
-            return `
-                <div class="record-item">
-                    <div class="record-info">
-                        <div class="record-time">${time}</div>
-                        <div class="record-content">${content}</div>
-                        ${note ? `<div class="record-note">${note}</div>` : ''}
-                    </div>
-                    <div class="record-actions">
-                        <button class="btn-icon btn-edit" onclick="editRecord('${type}', ${rowIdx})">✏️</button>
-                        <button class="btn-icon btn-delete" onclick="deleteRecord('${type}', ${rowIdx})">🗑️</button>
-                    </div>
-                </div>
-            `;
-        }
-        
-        function renderPhotoGrid(records) {
-            const container = document.getElementById('photo-grid');
-            if (!records || records.length === 0) {
-                container.innerHTML = `
-                    <div class="empty-state" style="grid-column: 1 / -1;">
-                        <div class="empty-state-icon">📸</div>
-                        <div>还没有照片</div>
-                    </div>
-                `;
-                return;
-            }
-            
-            const sorted = [...records].reverse();
-            container.innerHTML = sorted.map(record => `
-                <div class="photo-item" onclick="viewImage('${record.drive_url}')">
-                    <img src="${record.drive_url}" alt="" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22100%22 height=%22100%22><text x=%2250%22 y=%2250%22 text-anchor=%22middle%22>📷</text></svg>'">
-                    ${record.caption ? `<div class="photo-caption">${record.caption}</div>` : ''}
-                </div>
-            `).join('');
-        }
-        
-        // ========== 表单提交 ==========
-        async function handleSubmit(type, formData) {
-            try {
-                const res = await fetch('/api/add', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ type, ...formData })
-                });
-                
-                if (!res.ok) throw new Error('保存失败');
-                
-                showToast('保存成功');
-                // 后台异步刷新数据，不阻塞用户
-                setTimeout(() => fetchData(), 100);
-                return true;
-            } catch (err) {
-                console.error('保存错误:', err);
-                showToast('保存失败');
-                return false;
-            }
-        }
-        
-        // 绑定表单提交
-        document.getElementById('form-milk').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const formData = Object.fromEntries(new FormData(e.target));
-            // 转换 datetime-local 格式
-            if (formData.timestamp) {
-                formData.timestamp = formData.timestamp.replace('T', ' ');
-            }
-            // 将 milk_type 改为 type 字段存储
-            if (formData.type) {
-                formData.milk_type = formData.type;
-                delete formData.type;
-            }
-            // 立即清空表单，不等待响应
-            e.target.reset();
-            document.getElementById('milk-time').value = getNowStr();
-            // 后台保存
-            handleSubmit('milk', formData);
-        });
-        
-        document.getElementById('form-food').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const formData = Object.fromEntries(new FormData(e.target));
-            if (formData.timestamp) {
-                formData.timestamp = formData.timestamp.replace('T', ' ');
-            }
-            // 立即清空表单
-            e.target.reset();
-            document.getElementById('food-time').value = getNowStr();
-            // 后台保存
-            handleSubmit('food', formData);
-        });
-        
-        document.getElementById('form-poop').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const formData = Object.fromEntries(new FormData(e.target));
-            if (formData.timestamp) {
-                formData.timestamp = formData.timestamp.replace('T', ' ');
-            }
-            // 将 poop_type 改为 type 字段存储
-            if (formData.type) {
-                formData.poop_type = formData.type;
-                delete formData.type;
-            }
-            // 立即清空表单
-            e.target.reset();
-            document.getElementById('poop-time').value = getNowStr();
-            // 后台保存
-            handleSubmit('poop', formData);
-        });
-        
-        document.getElementById('form-sleep').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const formData = Object.fromEntries(new FormData(e.target));
-            if (formData.start_time) {
-                formData.start_time = formData.start_time.replace('T', ' ');
-            }
-            if (formData.end_time) {
-                formData.end_time = formData.end_time.replace('T', ' ');
-            }
-            // 立即清空表单
-            e.target.reset();
-            // 后台保存
-            handleSubmit('sleep', formData);
-        });
-        
-        document.getElementById('form-milestone').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const formData = Object.fromEntries(new FormData(e.target));
-            // 立即清空表单
-            e.target.reset();
-            // 后台保存
-            handleSubmit('milestone', formData);
-        });
-        
-        document.getElementById('form-growth').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const formData = Object.fromEntries(new FormData(e.target));
-            // 立即清空表单
-            e.target.reset();
-            // 后台保存并刷新图表
-            handleSubmit('growth', formData).then(() => {
-                setTimeout(() => {
-                    if (window.growthChart) {
-                        window.growthChart.destroy();
-                    }
-                    renderGrowthChart();
-                }, 1000);
-            });
-        });
-        
-        document.getElementById('form-other').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const formData = Object.fromEntries(new FormData(e.target));
-            if (formData.timestamp) {
-                formData.timestamp = formData.timestamp.replace('T', ' ');
-            }
-            // 立即清空表单
-            e.target.reset();
-            document.getElementById('other-time').value = getNowStr();
-            // 后台保存
-            handleSubmit('other', formData);
-        });
-        
-        // ========== 照片上传 ==========
-        function previewPhoto(input) {
-            if (input.files && input.files[0]) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    const preview = document.getElementById('photo-preview');
-                    preview.src = e.target.result;
-                    preview.style.display = 'block';
-                };
-                reader.readAsDataURL(input.files[0]);
-            }
-        }
-        
-        document.getElementById('form-photo').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const formData = new FormData(e.target);
-            
-            try {
-                const res = await fetch('/api/upload', {
-                    method: 'POST',
-                    body: formData
-                });
-                
-                if (!res.ok) throw new Error('上传失败');
-                
-                showToast('上传成功');
-                e.target.reset();
-                document.getElementById('photo-preview').style.display = 'none';
-                fetchData();
-            } catch (err) {
-                console.error('上传错误:', err);
-                showToast('上传失败');
-            }
-        });
+        // (Old form listeners removed - forms are now handled via modal submit functions)
         
         function viewImage(url) {
             const viewer = document.getElementById('image-viewer');
@@ -2939,8 +2442,8 @@
             // 删除旧记录
             await deleteRecord(type, rowIdx, false);
             
-            // 切换到对应标签页
-            switchTab(type);
+            // 切换到输入页面
+            switchPage('input');
             
             showToast('请重新填写记录');
         }
@@ -2951,7 +2454,7 @@
 
             try {
                 // 找到该记录在原始数组中的实际索引
-                const todayStr = currentDate;
+                const todayStr = getTodayStr();
                 const records = currentData[type] || [];
                 const todayRecords = records.filter(r => {
                     const ts = r.timestamp || r.date || r.start_time || '';
@@ -2982,156 +2485,7 @@
             }
         }
         
-        // ========== 成长图表 ==========
-        function renderGrowthChart() {
-            const chartType = document.getElementById('growth-chart-type').value;
-            const canvas = document.getElementById('chart-canvas');
-            const container = document.getElementById('growth-chart');
-            
-            // 获取成长数据
-            const growthData = currentData.growth || [];
-            if (growthData.length === 0) {
-                container.innerHTML = '<div class="empty-state" style="height: 200px;"><div>还没有测量数据</div></div>';
-                return;
-            }
-            
-            // 使用简单的 Canvas 绘制
-            const width = container.offsetWidth;
-            const height = 250;
-            
-            canvas.width = width;
-            canvas.height = height;
-            
-            const ctx = canvas.getContext('2d');
-            ctx.clearRect(0, 0, width, height);
-            
-            // 准备数据点
-            const points = growthData.map(r => {
-                const date = new Date(r.date);
-                const birthDate = new Date('{{ birth_date }}');
-                const months = (date - birthDate) / (1000 * 60 * 60 * 24 * 30);
-                const value = parseFloat(chartType === 'weight' ? r.weight_kg : r.height_cm);
-                return { months, value, date: r.date };
-            }).filter(p => !isNaN(p.value) && p.value > 0);
-            
-            if (points.length === 0) {
-                ctx.fillStyle = '#999';
-                ctx.font = '14px sans-serif';
-                ctx.textAlign = 'center';
-                ctx.fillText('数据不足', width / 2, height / 2);
-                return;
-            }
-            
-            // 计算范围
-            const ageMonths = parseInt(document.body.dataset.ageMonths || '0');
-            const maxMonth = Math.max(...points.map(p => p.months), ageMonths);
-            const values = points.map(p => p.value);
-            const minValue = Math.min(...values) * 0.9;
-            const maxValue = Math.max(...values) * 1.1;
-            
-            const padding = { left: 40, right: 20, top: 20, bottom: 30 };
-            const chartWidth = width - padding.left - padding.right;
-            const chartHeight = height - padding.top - padding.bottom;
-            
-            // 绘制网格
-            ctx.strokeStyle = '#e0e0e0';
-            ctx.lineWidth = 1;
-            
-            // 横向网格线
-            for (let i = 0; i <= 5; i++) {
-                const y = padding.top + (chartHeight / 5) * i;
-                ctx.beginPath();
-                ctx.moveTo(padding.left, y);
-                ctx.lineTo(width - padding.right, y);
-                ctx.stroke();
-                
-                // Y轴标签
-                const value = maxValue - (maxValue - minValue) * (i / 5);
-                ctx.fillStyle = '#666';
-                ctx.font = '10px sans-serif';
-                ctx.textAlign = 'right';
-                ctx.fillText(value.toFixed(1), padding.left - 5, y + 3);
-            }
-            
-            // 纵向网格线
-            for (let i = 0; i <= Math.ceil(maxMonth); i += Math.ceil(maxMonth / 6) || 1) {
-                const x = padding.left + (i / maxMonth) * chartWidth;
-                ctx.beginPath();
-                ctx.moveTo(x, padding.top);
-                ctx.lineTo(x, height - padding.bottom);
-                ctx.stroke();
-                
-                // X轴标签
-                ctx.fillStyle = '#666';
-                ctx.font = '10px sans-serif';
-                ctx.textAlign = 'center';
-                ctx.fillText(i + '月', x, height - 10);
-            }
-            
-            // 绘制数据线
-            ctx.strokeStyle = '#4CAF50';
-            ctx.lineWidth = 2;
-            ctx.beginPath();
-            
-            points.forEach((p, i) => {
-                const x = padding.left + (p.months / maxMonth) * chartWidth;
-                const y = padding.top + chartHeight - ((p.value - minValue) / (maxValue - minValue)) * chartHeight;
-                
-                if (i === 0) {
-                    ctx.moveTo(x, y);
-                } else {
-                    ctx.lineTo(x, y);
-                }
-            });
-            ctx.stroke();
-            
-            // 绘制数据点
-            points.forEach(p => {
-                const x = padding.left + (p.months / maxMonth) * chartWidth;
-                const y = padding.top + chartHeight - ((p.value - minValue) / (maxValue - minValue)) * chartHeight;
-                
-                ctx.fillStyle = '#4CAF50';
-                ctx.beginPath();
-                ctx.arc(x, y, 4, 0, Math.PI * 2);
-                ctx.fill();
-            });
-        }
-        
-        // ========== 日期导航 ==========
-        function changeDate(days) {
-            currentDate.setDate(currentDate.getDate() + days);
-            updateDateDisplay();
-            // 这里可以实现按日期筛选数据的功能
-        }
-        
-        function updateDateDisplay() {
-            const year = currentDate.getFullYear();
-            const month = String(currentDate.getMonth() + 1).padStart(2, '0');
-            const day = String(currentDate.getDate()).padStart(2, '0');
-            document.getElementById('current-date').textContent = `${month}-${day}`;
-        }
-        
-        // ========== 设置 ==========
-        function openSettings() {
-            document.getElementById('settings-modal').classList.add('show');
-        }
-        
-        function closeSettings() {
-            document.getElementById('settings-modal').classList.remove('show');
-        }
-        
-        function refreshData() {
-            fetchData();
-            showToast('数据已刷新');
-        }
-        
-        function saveSettings() {
-            // 保存出生日期等设置
-            const birthDate = document.getElementById('setting-birth-date').value;
-            localStorage.setItem('birthDate', birthDate);
-            showToast('设置已保存');
-            closeSettings();
-        }
+        // (Duplicate renderGrowthChart and dead settings/navigation code removed)
         
         // ========== 表单提交 ==========
         async function submitMilk() {
@@ -3214,6 +2568,30 @@
             };
             
             await submitRecord(data, '睡眠');
+        }
+        
+        async function submitGrowth() {
+            const date = document.getElementById('growth-date').value;
+            const weight = document.getElementById('growth-weight').value;
+            const height = document.getElementById('growth-height').value;
+            const head = document.getElementById('growth-head').value;
+            const note = document.getElementById('growth-note').value;
+            
+            if (!weight && !height && !head) {
+                showToast('请至少输入一项数据');
+                return;
+            }
+            
+            const data = {
+                type: 'growth',
+                date: date,
+                weight_kg: weight,
+                height_cm: height,
+                head_cm: head,
+                note: note
+            };
+            
+            await submitRecord(data, '成长数据');
         }
         
         async function submitMilestone() {

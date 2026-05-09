@@ -567,13 +567,9 @@ def upload_photo():
             body={'type': 'anyone', 'role': 'reader'}
         ).execute()
         
-        # 将记录添加到表格
         direct_link = f'https://drive.google.com/uc?export=view&id={file_id}'
         
-        sh = init_spreadsheet()
-        if sh:
-            ws = ensure_worksheet(sh, 'photo', SHEET_HEADERS['photo'])
-            ws.append_row([get_now_str(), direct_link, caption])
+        # 注意：不再在此处保存记录到表格，由前端 submitPhoto/submitMilestone 调用 /api/add 统一处理
         
         return jsonify({
             'success': True,
