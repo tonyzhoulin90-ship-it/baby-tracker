@@ -800,7 +800,7 @@
             right: 0;
             bottom: 0;
             background: rgba(0, 0, 0, 0.4);
-            z-index: 2500;
+            z-index: 3000;
             display: none;
             align-items: flex-end;
             justify-content: center;
@@ -1007,6 +1007,17 @@
             background: var(--bg);
         }
         
+        .calendar-day.today {
+            border: 2px solid var(--primary);
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        .calendar-day.selected {
+            background: var(--primary);
+            color: white;
+        }
+
         .calendar-day.active {
             background: var(--primary);
             color: white;
@@ -2061,13 +2072,20 @@
             }
             
             // 当月日期
+            const todayDate = new Date();
             for (let i = 1; i <= daysInMonth; i++) {
-                const isToday = i === new Date().getDate() && 
-                               month === new Date().getMonth() && 
-                               year === new Date().getFullYear();
-                const isSelected = i === currentPickerDate.getDate();
+                const isToday = i === todayDate.getDate() && 
+                               month === todayDate.getMonth() && 
+                               year === todayDate.getFullYear();
+                const isSelected = i === currentPickerDate.getDate() &&
+                                  month === currentPickerDate.getMonth() &&
+                                  year === currentPickerDate.getFullYear();
                 
-                html += `<div class="calendar-day ${isToday ? 'active' : ''} ${isSelected ? 'active' : ''}" 
+                let cls = '';
+                if (isSelected) cls += ' selected';
+                else if (isToday) cls += ' today';
+                
+                html += `<div class="calendar-day${cls}" 
                               onclick="selectPickerDate(${i})">${i}</div>`;
             }
             
@@ -3263,7 +3281,7 @@
 
         async function uploadPhoto(file) {
             const formData = new FormData();
-            formData.append('file', file);
+            formData.append('photo', file);
 
             const res = await fetch('/api/upload', {
                 method: 'POST',
