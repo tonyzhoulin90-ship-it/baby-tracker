@@ -1334,7 +1334,8 @@
                 if (!res.ok) throw new Error('保存失败');
                 
                 showToast('保存成功');
-                fetchData(); // 刷新数据
+                // 后台异步刷新数据，不阻塞用户
+                setTimeout(() => fetchData(), 100);
                 return true;
             } catch (err) {
                 console.error('保存错误:', err);
@@ -1356,10 +1357,11 @@
                 formData.milk_type = formData.type;
                 delete formData.type;
             }
-            if (await handleSubmit('milk', formData)) {
-                e.target.reset();
-                document.getElementById('milk-time').value = getNowStr();
-            }
+            // 立即清空表单，不等待响应
+            e.target.reset();
+            document.getElementById('milk-time').value = getNowStr();
+            // 后台保存
+            handleSubmit('milk', formData);
         });
         
         document.getElementById('form-food').addEventListener('submit', async (e) => {
@@ -1368,10 +1370,11 @@
             if (formData.timestamp) {
                 formData.timestamp = formData.timestamp.replace('T', ' ');
             }
-            if (await handleSubmit('food', formData)) {
-                e.target.reset();
-                document.getElementById('food-time').value = getNowStr();
-            }
+            // 立即清空表单
+            e.target.reset();
+            document.getElementById('food-time').value = getNowStr();
+            // 后台保存
+            handleSubmit('food', formData);
         });
         
         document.getElementById('form-poop').addEventListener('submit', async (e) => {
@@ -1385,10 +1388,11 @@
                 formData.poop_type = formData.type;
                 delete formData.type;
             }
-            if (await handleSubmit('poop', formData)) {
-                e.target.reset();
-                document.getElementById('poop-time').value = getNowStr();
-            }
+            // 立即清空表单
+            e.target.reset();
+            document.getElementById('poop-time').value = getNowStr();
+            // 后台保存
+            handleSubmit('poop', formData);
         });
         
         document.getElementById('form-sleep').addEventListener('submit', async (e) => {
@@ -1400,30 +1404,35 @@
             if (formData.end_time) {
                 formData.end_time = formData.end_time.replace('T', ' ');
             }
-            if (await handleSubmit('sleep', formData)) {
-                e.target.reset();
-                document.getElementById('sleep-start').value = getNowStr();
-                document.getElementById('sleep-end').value = '';
-                document.getElementById('sleep-duration').value = '';
-            }
+            // 立即清空表单
+            e.target.reset();
+            // 后台保存
+            handleSubmit('sleep', formData);
         });
         
         document.getElementById('form-milestone').addEventListener('submit', async (e) => {
             e.preventDefault();
             const formData = Object.fromEntries(new FormData(e.target));
-            if (await handleSubmit('milestone', formData)) {
-                e.target.reset();
-                document.getElementById('milestone-date').value = getTodayStr();
-            }
+            // 立即清空表单
+            e.target.reset();
+            // 后台保存
+            handleSubmit('milestone', formData);
         });
         
         document.getElementById('form-growth').addEventListener('submit', async (e) => {
             e.preventDefault();
             const formData = Object.fromEntries(new FormData(e.target));
-            if (await handleSubmit('growth', formData)) {
-                e.target.reset();
-                document.getElementById('growth-date').value = getTodayStr();
-            }
+            // 立即清空表单
+            e.target.reset();
+            // 后台保存并刷新图表
+            handleSubmit('growth', formData).then(() => {
+                setTimeout(() => {
+                    if (window.growthChart) {
+                        window.growthChart.destroy();
+                    }
+                    renderGrowthChart();
+                }, 1000);
+            });
         });
         
         document.getElementById('form-other').addEventListener('submit', async (e) => {
@@ -1432,10 +1441,11 @@
             if (formData.timestamp) {
                 formData.timestamp = formData.timestamp.replace('T', ' ');
             }
-            if (await handleSubmit('other', formData)) {
-                e.target.reset();
-                document.getElementById('other-time').value = getNowStr();
-            }
+            // 立即清空表单
+            e.target.reset();
+            document.getElementById('other-time').value = getNowStr();
+            // 后台保存
+            handleSubmit('other', formData);
         });
         
         // ========== 照片上传 ==========
