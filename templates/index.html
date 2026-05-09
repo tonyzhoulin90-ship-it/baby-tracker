@@ -12,16 +12,30 @@
         }
         
         :root {
-            --primary: #4CAF50;
-            --primary-dark: #388E3C;
-            --secondary: #FF9800;
-            --danger: #f44336;
-            --bg: #f5f5f5;
+            --primary: #007AFF;
+            --primary-light: #5AC8FA;
+            --secondary: #34C759;
+            --warning: #FF9500;
+            --danger: #FF3B30;
+            --milk: #FF9500;
+            --sleep: #5856D6;
+            --poop: #8E8E93;
+            --food: #34C759;
+            --milestone: #AF52DE;
+            --growth: #FF2D55;
+            --bg: #F2F2F7;
             --card: #ffffff;
-            --text: #333333;
-            --text-light: #666666;
-            --border: #e0e0e0;
-            --shadow: 0 2px 8px rgba(0,0,0,0.1);
+            --text: #000000;
+            --text-light: #8E8E93;
+            --text-secondary: #666666;
+            --border: #E5E5EA;
+            --separator: #C6C6C8;
+            --shadow: 0 1px 3px rgba(0,0,0,0.1);
+            --shadow-lg: 0 4px 12px rgba(0,0,0,0.15);
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 16px;
+            --radius-xl: 20px;
         }
         
         body {
@@ -468,19 +482,127 @@
             font-size: 0.7rem;
         }
         
-        /* 加载状态 */
-        .loading {
-            display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 2px solid rgba(255,255,255,0.3);
-            border-radius: 50%;
-            border-top-color: white;
-            animation: spin 1s ease-in-out infinite;
+        /* 快捷操作大按钮 */
+        .quick-actions {
+            display: flex;
+            justify-content: space-around;
+            padding: 20px;
+            background: var(--card);
+            margin-bottom: 10px;
         }
         
-        @keyframes spin {
-            to { transform: rotate(360deg); }
+        .quick-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        
+        .quick-btn:active {
+            transform: scale(0.95);
+        }
+        
+        .quick-btn-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            box-shadow: var(--shadow);
+        }
+        
+        .quick-btn-icon.milk { background: linear-gradient(135deg, #FFE0B2, #FFB74D); }
+        .quick-btn-icon.sleep { background: linear-gradient(135deg, #B3E5FC, #64B5F6); }
+        .quick-btn-icon.poop { background: linear-gradient(135deg, #D7CCC8, #A1887F); }
+        .quick-btn-icon.food { background: linear-gradient(135deg, #C8E6C9, #81C784); }
+        
+        .quick-btn-label {
+            font-size: 0.75rem;
+            color: var(--text-light);
+        }
+        
+        /* 时间轴记录 */
+        .timeline {
+            padding: 0 15px;
+        }
+        
+        .timeline-item {
+            display: flex;
+            align-items: flex-start;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .timeline-item:last-child {
+            border-bottom: none;
+        }
+        
+        .timeline-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            margin-right: 12px;
+            flex-shrink: 0;
+        }
+        
+        .timeline-icon.milk { background: #FFF3E0; }
+        .timeline-icon.sleep { background: #E3F2FD; }
+        .timeline-icon.poop { background: #EFEBE9; }
+        .timeline-icon.food { background: #E8F5E9; }
+        .timeline-icon.milestone { background: #F3E5F5; }
+        
+        .timeline-content {
+            flex: 1;
+        }
+        
+        .timeline-title {
+            font-weight: 600;
+            font-size: 0.9rem;
+            margin-bottom: 2px;
+        }
+        
+        .timeline-desc {
+            font-size: 0.8rem;
+            color: var(--text-light);
+        }
+        
+        .timeline-time {
+            font-size: 0.75rem;
+            color: var(--text-light);
+            white-space: nowrap;
+        }
+        
+        /* 统计卡片 */
+        .stats-bar {
+            display: flex;
+            justify-content: space-around;
+            padding: 15px;
+            background: var(--card);
+            margin-bottom: 10px;
+        }
+        
+        .stat-item {
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+        
+        .stat-label {
+            font-size: 0.7rem;
+            color: var(--text-light);
+            margin-top: 2px;
         }
         
         /* 提示消息 */
@@ -603,458 +725,844 @@
                 grid-template-columns: repeat(3, 1fr);
             }
         }
+        
+        /* ========== iOS风格底部导航栏 ========== */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: space-around;
+            padding: 8px 0 20px;
+            z-index: 1000;
+        }
+        
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 20px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .nav-item.active .nav-icon {
+            color: var(--primary);
+        }
+        
+        .nav-item.active .nav-label {
+            color: var(--primary);
+        }
+        
+        .nav-icon {
+            font-size: 1.5rem;
+            color: var(--text-light);
+            transition: color 0.2s;
+        }
+        
+        .nav-label {
+            font-size: 0.65rem;
+            color: var(--text-light);
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+        
+        /* ========== iOS风格时间选择器 ========== */
+        .time-picker-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.4);
+            z-index: 2000;
+            display: none;
+            align-items: flex-end;
+            justify-content: center;
+        }
+        
+        .time-picker-overlay.active {
+            display: flex;
+        }
+        
+        .time-picker-sheet {
+            background: var(--card);
+            border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+            width: 100%;
+            max-width: 430px;
+            padding: 20px;
+            animation: slideUp 0.3s ease;
+        }
+        
+        @keyframes slideUp {
+            from { transform: translateY(100%); }
+            to { transform: translateY(0); }
+        }
+        
+        .time-picker-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .time-picker-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+        
+        .time-picker-done {
+            color: var(--primary);
+            font-weight: 600;
+            cursor: pointer;
+        }
+        
+        .time-picker-wheels {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            height: 200px;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .time-wheel {
+            flex: 1;
+            max-width: 80px;
+            overflow-y: scroll;
+            scroll-snap-type: y mandatory;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+        }
+        
+        .time-wheel::-webkit-scrollbar {
+            display: none;
+        }
+        
+        .time-wheel-item {
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            scroll-snap-align: center;
+            color: var(--text-light);
+        }
+        
+        .time-wheel-item.active {
+            color: var(--text);
+            font-weight: 600;
+            font-size: 1.4rem;
+        }
+        
+        .time-wheel-separator {
+            display: flex;
+            align-items: center;
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--text);
+        }
+        
+        .time-picker-indicator {
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 40px;
+            transform: translateY(-50%);
+            border-top: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
+            pointer-events: none;
+        }
+        
+        /* ========== iOS风格日期选择器 ========== */
+        .date-picker-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: var(--bg);
+            border-radius: var(--radius-md);
+            font-weight: 500;
+            cursor: pointer;
+        }
+        
+        .date-picker-btn:active {
+            opacity: 0.7;
+        }
+        
+        .date-picker-calendar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.4);
+            z-index: 2000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .date-picker-calendar.active {
+            display: flex;
+        }
+        
+        .calendar-sheet {
+            background: var(--card);
+            border-radius: var(--radius-lg);
+            width: 90%;
+            max-width: 360px;
+            padding: 20px;
+        }
+        
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .calendar-month-year {
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+        
+        .calendar-nav {
+            display: flex;
+            gap: 15px;
+        }
+        
+        .calendar-nav-btn {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--bg);
+            cursor: pointer;
+        }
+        
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 5px;
+        }
+        
+        .calendar-day-header {
+            text-align: center;
+            font-size: 0.75rem;
+            color: var(--text-light);
+            padding: 8px 0;
+        }
+        
+        .calendar-day {
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            font-size: 0.9rem;
+            cursor: pointer;
+            position: relative;
+        }
+        
+        .calendar-day:hover {
+            background: var(--bg);
+        }
+        
+        .calendar-day.active {
+            background: var(--primary);
+            color: white;
+        }
+        
+        .calendar-day.has-photo::after {
+            content: '';
+            position: absolute;
+            bottom: 4px;
+            width: 4px;
+            height: 4px;
+            border-radius: 50%;
+            background: var(--primary);
+        }
+        
+        .calendar-day.other-month {
+            color: var(--text-light);
+            opacity: 0.5;
+        }
+        
+        /* ========== iOS风格输入项 ========== */
+        .input-list {
+            background: var(--card);
+            border-radius: var(--radius-md);
+            margin: 10px 15px;
+            overflow: hidden;
+        }
+        
+        .input-item {
+            display: flex;
+            align-items: center;
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--border);
+            cursor: pointer;
+        }
+        
+        .input-item:last-child {
+            border-bottom: none;
+        }
+        
+        .input-item:active {
+            background: var(--bg);
+        }
+        
+        .input-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 12px;
+            font-size: 1.2rem;
+        }
+        
+        .input-icon.milk { background: #FFF3E0; }
+        .input-icon.food { background: #E8F5E9; }
+        .input-icon.poop { background: #EFEBE9; }
+        .input-icon.sleep { background: #E3F2FD; }
+        .input-icon.photo { background: #F3E5F5; }
+        .input-icon.milestone { background: #E1F5FE; }
+        .input-icon.other { background: #F5F5F5; }
+        
+        .input-content {
+            flex: 1;
+        }
+        
+        .input-title {
+            font-weight: 500;
+            font-size: 1rem;
+        }
+        
+        .input-subtitle {
+            font-size: 0.8rem;
+            color: var(--text-light);
+            margin-top: 2px;
+        }
+        
+        .input-arrow {
+            color: var(--text-light);
+            font-size: 1.2rem;
+        }
+        
+        /* ========== 页面容器 ========== */
+        .page {
+            display: none;
+            padding-bottom: 100px;
+        }
+        
+        .page.active {
+            display: block;
+        }
+        
+        /* ========== 今日页面样式 ========== */
+        .today-header {
+            background: var(--card);
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .today-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+        }
+        
+        .today-overview {
+            background: var(--card);
+            border-radius: var(--radius-lg);
+            margin: 0 15px 15px;
+            padding: 20px;
+        }
+        
+        .overview-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+        }
+        
+        .overview-item {
+            text-align: center;
+        }
+        
+        .overview-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+        
+        .overview-label {
+            font-size: 0.75rem;
+            color: var(--text-light);
+            margin-top: 4px;
+        }
+        
+        /* ========== 照片网格 ========== */
+        .photo-section {
+            background: var(--card);
+            border-radius: var(--radius-lg);
+            margin: 0 15px 15px;
+            padding: 15px;
+        }
+        
+        .photo-section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        
+        .photo-section-title {
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+        
+        .add-photo-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: var(--primary);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 1.3rem;
+        }
+        
+        .photo-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+        }
+        
+        .photo-item {
+            aspect-ratio: 1;
+            border-radius: var(--radius-sm);
+            background: var(--bg);
+            overflow: hidden;
+            cursor: pointer;
+        }
+        
+        .photo-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        /* ========== 时间轴 ========== */
+        .timeline-section {
+            background: var(--card);
+            border-radius: var(--radius-lg);
+            margin: 0 15px 15px;
+            padding: 15px;
+        }
+        
+        .timeline-item {
+            display: flex;
+            align-items: flex-start;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .timeline-item:last-child {
+            border-bottom: none;
+        }
+        
+        .timeline-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 12px;
+            font-size: 1.1rem;
+        }
+        
+        .timeline-content {
+            flex: 1;
+        }
+        
+        .timeline-title {
+            font-weight: 500;
+            font-size: 0.95rem;
+        }
+        
+        .timeline-desc {
+            font-size: 0.8rem;
+            color: var(--text-light);
+            margin-top: 2px;
+        }
+        
+        .timeline-time {
+            font-size: 0.75rem;
+            color: var(--text-light);
+        }
+        
+        /* ========== 日历页面 ========== */
+        .calendar-page {
+            background: var(--card);
+            min-height: calc(100vh - 100px);
+        }
+        
+        .milestone-timeline {
+            padding: 20px;
+        }
+        
+        .milestone-item {
+            display: flex;
+            margin-bottom: 20px;
+        }
+        
+        .milestone-date {
+            width: 60px;
+            text-align: center;
+            font-size: 0.8rem;
+            color: var(--text-light);
+        }
+        
+        .milestone-content {
+            flex: 1;
+            padding-left: 15px;
+            border-left: 2px solid var(--border);
+        }
+        
+        /* ========== 成长页面 ========== */
+        .chart-container {
+            background: var(--card);
+            border-radius: var(--radius-lg);
+            margin: 0 15px 15px;
+            padding: 15px;
+        }
+        
+        .chart-title {
+            font-weight: 600;
+            margin-bottom: 15px;
+        }
+        
+        .period-selector {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+        
+        .period-btn {
+            padding: 6px 12px;
+            border-radius: var(--radius-sm);
+            background: var(--bg);
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .period-btn.active {
+            background: var(--primary);
+            color: white;
+        }
     </style>
 </head>
 <body data-age-months="{{ age_months }}" data-age-days="{{ age_days }}" data-birth-date="{{ birth_date }}">
-    <!-- 头部 -->
-    <div class="header">
-        <h1>🍼 宝宝成长记录</h1>
-        <div class="age-info">
-            出生日期: <span id="birth-date">{{ birth_date }}</span> | 
-            今天第 <span id="age-days">{{ age_days }}</span> 天 | 
-            <span id="age-months">{{ age_months }}</span> 月龄
-        </div>
-    </div>
-    
-    <!-- 今日概览 -->
-    <div class="overview">
-        <div class="overview-title">
-            <span>📊 今日概览</span>
-            <div class="date-nav">
-                <button onclick="changeDate(-1)">‹</button>
-                <span id="current-date"></span>
-                <button onclick="changeDate(1)">›</button>
+    <!-- ========== 今日页面 ========== -->
+    <div class="page active" id="page-today">
+        <!-- 今日头部 -->
+        <div class="today-header">
+            <div class="today-title">今天</div>
+            <div class="date-picker-btn" onclick="showDatePicker()">
+                <span id="today-date-display">今天</span>
+                <span>▼</span>
             </div>
         </div>
-        <div class="stats-grid">
-            <div class="stat-item">
-                <div class="stat-value" id="stat-milk">0</div>
-                <div class="stat-label">喂奶 ml</div>
-            </div>
-            <div class="stat-item">
-                <div class="stat-value" id="stat-food">0</div>
-                <div class="stat-label">辅食</div>
-            </div>
-            <div class="stat-item">
-                <div class="stat-value" id="stat-poop">0</div>
-                <div class="stat-label">排便</div>
-            </div>
-            <div class="stat-item">
-                <div class="stat-value" id="stat-sleep">0</div>
-                <div class="stat-label">睡眠 min</div>
-            </div>
-        </div>
-    </div>
-    
-    <!-- 快速操作 -->
-    <div class="quick-actions">
-        <div class="quick-btn" onclick="quickAdd('milk')">
-            <div class="quick-btn-icon">🍼</div>
-            <div class="quick-btn-label">喂奶</div>
-        </div>
-        <div class="quick-btn" onclick="quickAdd('food')">
-            <div class="quick-btn-icon">🍚</div>
-            <div class="quick-btn-label">辅食</div>
-        </div>
-        <div class="quick-btn" onclick="quickAdd('poop')">
-            <div class="quick-btn-icon">💩</div>
-            <div class="quick-btn-label">排便</div>
-        </div>
-        <div class="quick-btn" onclick="quickAdd('sleep')">
-            <div class="quick-btn-icon">😴</div>
-            <div class="quick-btn-label">睡眠</div>
-        </div>
-    </div>
-    
-    <!-- 标签导航 -->
-    <div class="tab-nav">
-        <button class="tab-btn active" data-tab="milk">喂奶</button>
-        <button class="tab-btn" data-tab="food">辅食</button>
-        <button class="tab-btn" data-tab="poop">排便</button>
-        <button class="tab-btn" data-tab="sleep">睡眠</button>
-        <button class="tab-btn" data-tab="photo">照片</button>
-        <button class="tab-btn" data-tab="milestone">里程碑</button>
-        <button class="tab-btn" data-tab="growth">成长</button>
-        <button class="tab-btn" data-tab="other">其他</button>
-    </div>
-    
-    <!-- 内容区 -->
-    <div class="content">
-        <!-- 喂奶 -->
-        <div class="tab-content active" id="tab-milk">
-            <div class="card">
-                <div class="card-header">🍼 记录喂奶</div>
-                <div class="card-body">
-                    <form id="form-milk">
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label class="form-label">时间</label>
-                                <input type="datetime-local" class="form-input" name="timestamp" id="milk-time">
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">奶量 (ml)</label>
-                                <input type="number" class="form-input" name="amount_ml" placeholder="例如: 120" min="0" step="5">
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">类型</label>
-                            <select class="form-select" name="type">
-                                <option value="母乳">母乳</option>
-                                <option value="配方奶">配方奶</option>
-                                <option value="混合">混合</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">备注</label>
-                            <input type="text" class="form-input" name="note" placeholder="可选">
-                        </div>
-                        <button type="submit" class="btn btn-primary">保存记录</button>
-                    </form>
+        
+        <!-- 今日概览 -->
+        <div class="today-overview">
+            <div class="overview-grid">
+                <div class="overview-item">
+                    <div class="overview-value" id="today-milk">0</div>
+                    <div class="overview-label">喝奶 ml</div>
                 </div>
-            </div>
-            <div class="card">
-                <div class="card-header">今日喂奶记录</div>
-                <div class="record-list" id="list-milk">
-                    <div class="empty-state">
-                        <div class="empty-state-icon">🍼</div>
-                        <div>还没有喂奶记录</div>
-                    </div>
+                <div class="overview-item">
+                    <div class="overview-value" id="today-sleep">0</div>
+                    <div class="overview-label">睡眠 小时</div>
+                </div>
+                <div class="overview-item">
+                    <div class="overview-value" id="today-diaper">0</div>
+                    <div class="overview-label">换尿布 次</div>
                 </div>
             </div>
         </div>
         
-        <!-- 辅食 -->
-        <div class="tab-content" id="tab-food">
-            <div class="card">
-                <div class="card-header">🍚 记录辅食</div>
-                <div class="card-body">
-                    <form id="form-food">
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label class="form-label">时间</label>
-                                <input type="datetime-local" class="form-input" name="timestamp" id="food-time">
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">食物类型</label>
-                                <input type="text" class="form-input" name="food_type" placeholder="例如: 米粉、果泥">
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">食量</label>
-                            <input type="text" class="form-input" name="amount" placeholder="例如: 半碗、2勺">
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">备注</label>
-                            <input type="text" class="form-input" name="note" placeholder="可选">
-                        </div>
-                        <button type="submit" class="btn btn-primary">保存记录</button>
-                    </form>
-                </div>
+        <!-- 今日照片 -->
+        <div class="photo-section">
+            <div class="photo-section-header">
+                <div class="photo-section-title">📸 今日照片</div>
+                <div class="add-photo-btn" onclick="addPhoto()">+</div>
             </div>
-            <div class="card">
-                <div class="card-header">今日辅食记录</div>
-                <div class="record-list" id="list-food">
-                    <div class="empty-state">
-                        <div class="empty-state-icon">🍚</div>
-                        <div>还没有辅食记录</div>
-                    </div>
+            <div class="photo-grid" id="today-photo-grid">
+                <div class="photo-item" style="display:flex;align-items:center;justify-content:center;color:var(--text-light);">
+                    暂无照片
                 </div>
             </div>
         </div>
         
-        <!-- 排便 -->
-        <div class="tab-content" id="tab-poop">
-            <div class="card">
-                <div class="card-header">💩 记录排便</div>
-                <div class="card-body">
-                    <form id="form-poop">
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label class="form-label">时间</label>
-                                <input type="datetime-local" class="form-input" name="timestamp" id="poop-time">
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">形状</label>
-                                <select class="form-select" name="type">
-                                    <option value="正常">正常</option>
-                                    <option value="稀便">稀便</option>
-                                    <option value="硬便">硬便</option>
-                                    <option value="水样">水样</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">颜色</label>
-                            <select class="form-select" name="color">
-                                <option value="黄色">黄色</option>
-                                <option value="黄绿色">黄绿色</option>
-                                <option value="绿色">绿色</option>
-                                <option value="褐色">褐色</option>
-                                <option value="其他">其他</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">备注</label>
-                            <input type="text" class="form-input" name="note" placeholder="可选">
-                        </div>
-                        <button type="submit" class="btn btn-primary">保存记录</button>
-                    </form>
-                </div>
+        <!-- 我的一天 -->
+        <div class="timeline-section">
+            <div class="photo-section-header">
+                <div class="photo-section-title">📝 我的一天</div>
             </div>
-            <div class="card">
-                <div class="card-header">今日排便记录</div>
-                <div class="record-list" id="list-poop">
-                    <div class="empty-state">
-                        <div class="empty-state-icon">💩</div>
-                        <div>还没有排便记录</div>
+            <div class="timeline" id="today-timeline">
+                <div class="timeline-item" onclick="quickAdd('milk')">
+                    <div class="timeline-icon milk">🍼</div>
+                    <div class="timeline-content">
+                        <div class="timeline-title">记录喂奶</div>
                     </div>
+                    <div class="input-arrow">›</div>
                 </div>
-            </div>
-        </div>
-        
-        <!-- 睡眠 -->
-        <div class="tab-content" id="tab-sleep">
-            <div class="card">
-                <div class="card-header">😴 记录睡眠</div>
-                <div class="card-body">
-                    <form id="form-sleep">
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label class="form-label">开始时间</label>
-                                <input type="datetime-local" class="form-input" name="start_time" id="sleep-start">
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">结束时间</label>
-                                <input type="datetime-local" class="form-input" name="end_time" id="sleep-end" onchange="calcSleepDuration()">
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">时长 (分钟)</label>
-                            <input type="number" class="form-input" name="duration_min" id="sleep-duration" placeholder="自动计算">
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">备注</label>
-                            <input type="text" class="form-input" name="note" placeholder="可选">
-                        </div>
-                        <button type="submit" class="btn btn-primary">保存记录</button>
-                    </form>
-                </div>
-            </div>
-            <div class="card">
-                <div class="card-header">今日睡眠记录</div>
-                <div class="record-list" id="list-sleep">
-                    <div class="empty-state">
-                        <div class="empty-state-icon">😴</div>
-                        <div>还没有睡眠记录</div>
+                <div class="timeline-item" onclick="quickAdd('sleep')">
+                    <div class="timeline-icon sleep">😴</div>
+                    <div class="timeline-content">
+                        <div class="timeline-title">记录睡眠</div>
                     </div>
+                    <div class="input-arrow">›</div>
                 </div>
-            </div>
-        </div>
-        
-        <!-- 照片 -->
-        <div class="tab-content" id="tab-photo">
-            <div class="card">
-                <div class="card-header">📸 上传照片</div>
-                <div class="card-body">
-                    <form id="form-photo" enctype="multipart/form-data">
-                        <div class="photo-upload" onclick="document.getElementById('photo-file').click()">
-                            <input type="file" id="photo-file" name="photo" accept="image/*" onchange="previewPhoto(this)">
-                            <div style="font-size: 2rem; margin-bottom: 10px;">📷</div>
-                            <div>点击选择照片</div>
-                            <div style="font-size: 0.8rem; color: var(--text-light); margin-top: 5px;">或拖拽到此处</div>
-                        </div>
-                        <img id="photo-preview" class="photo-preview" style="display: none;">
-                        <div class="form-group" style="margin-top: 15px;">
-                            <label class="form-label">描述</label>
-                            <input type="text" class="form-input" name="caption" placeholder="可选，如: 第一次翻身">
-                        </div>
-                        <button type="submit" class="btn btn-primary">上传照片</button>
-                    </form>
-                </div>
-            </div>
-            <div class="card">
-                <div class="card-header">照片记录</div>
-                <div class="card-body">
-                    <div class="photo-grid" id="photo-grid">
-                        <div class="empty-state" style="grid-column: 1 / -1;">
-                            <div class="empty-state-icon">📸</div>
-                            <div>还没有照片</div>
-                        </div>
+                <div class="timeline-item" onclick="quickAdd('poop')">
+                    <div class="timeline-icon poop">💩</div>
+                    <div class="timeline-content">
+                        <div class="timeline-title">记录换尿布</div>
                     </div>
+                    <div class="input-arrow">›</div>
                 </div>
-            </div>
-        </div>
-        
-        <!-- 里程碑 -->
-        <div class="tab-content" id="tab-milestone">
-            <div class="card">
-                <div class="card-header">🎯 记录里程碑</div>
-                <div class="card-body">
-                    <form id="form-milestone">
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label class="form-label">日期</label>
-                                <input type="date" class="form-input" name="date" id="milestone-date">
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">类别</label>
-                                <select class="form-select" name="category">
-                                    <option value="大运动">大运动</option>
-                                    <option value="精细动作">精细动作</option>
-                                    <option value="语言">语言</option>
-                                    <option value="认知">认知</option>
-                                    <option value="社交">社交</option>
-                                    <option value="其他">其他</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">描述</label>
-                            <textarea class="form-textarea" name="description" placeholder="例如: 第一次翻身、第一次叫妈妈..."></textarea>
-                        </div>
-                        <button type="submit" class="btn btn-primary">保存里程碑</button>
-                    </form>
-                </div>
-            </div>
-            <div class="card">
-                <div class="card-header">成长里程碑</div>
-                <div class="record-list" id="list-milestone">
-                    <div class="empty-state">
-                        <div class="empty-state-icon">🎯</div>
-                        <div>还没有里程碑记录</div>
+                <div class="timeline-item" onclick="quickAdd('food')">
+                    <div class="timeline-icon food">🍚</div>
+                    <div class="timeline-content">
+                        <div class="timeline-title">记录辅食</div>
                     </div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- 成长 -->
-        <div class="tab-content" id="tab-growth">
-            <div class="card">
-                <div class="card-header">📏 记录成长测量</div>
-                <div class="card-body">
-                    <form id="form-growth">
-                        <div class="form-group">
-                            <label class="form-label">测量日期</label>
-                            <input type="date" class="form-input" name="date" id="growth-date">
-                        </div>
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label class="form-label">体重 (kg)</label>
-                                <input type="number" class="form-input" name="weight_kg" placeholder="例如: 7.5" step="0.01">
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">身高 (cm)</label>
-                                <input type="number" class="form-input" name="height_cm" placeholder="例如: 68" step="0.1">
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">头围 (cm)</label>
-                            <input type="number" class="form-input" name="head_cm" placeholder="例如: 42" step="0.1">
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">备注</label>
-                            <input type="text" class="form-input" name="note" placeholder="可选">
-                        </div>
-                        <button type="submit" class="btn btn-primary">保存测量</button>
-                    </form>
-                </div>
-            </div>
-            <div class="card">
-                <div class="card-header">成长曲线</div>
-                <div class="card-body">
-                    <div class="form-row" style="margin-bottom: 15px;">
-                        <select class="form-select" id="growth-chart-type" onchange="renderGrowthChart()">
-                            <option value="weight">体重曲线</option>
-                            <option value="height">身高曲线</option>
-                        </select>
-                    </div>
-                    <div class="chart-container" id="growth-chart">
-                        <canvas id="chart-canvas"></canvas>
-                    </div>
-                </div>
-            </div>
-            <div class="card">
-                <div class="card-header">历史测量记录</div>
-                <div class="record-list" id="list-growth">
-                    <div class="empty-state">
-                        <div class="empty-state-icon">📏</div>
-                        <div>还没有测量记录</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- 其他 -->
-        <div class="tab-content" id="tab-other">
-            <div class="card">
-                <div class="card-header">📝 其他记录</div>
-                <div class="card-body">
-                    <form id="form-other">
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label class="form-label">时间</label>
-                                <input type="datetime-local" class="form-input" name="timestamp" id="other-time">
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">类别</label>
-                                <input type="text" class="form-input" name="category" placeholder="例如: 体温、疫苗">
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">内容</label>
-                            <textarea class="form-textarea" name="content" placeholder="记录具体内容..."></textarea>
-                        </div>
-                        <button type="submit" class="btn btn-primary">保存记录</button>
-                    </form>
-                </div>
-            </div>
-            <div class="card">
-                <div class="card-header">其他记录</div>
-                <div class="record-list" id="list-other">
-                    <div class="empty-state">
-                        <div class="empty-state-icon">📝</div>
-                        <div>还没有其他记录</div>
-                    </div>
+                    <div class="input-arrow">›</div>
                 </div>
             </div>
         </div>
     </div>
     
-    <!-- 底部导航 -->
+    <!-- ========== 输入页面 ========== -->
+    <div class="page" id="page-input">
+        <div class="today-header">
+            <div class="today-title">记录</div>
+        </div>
+        
+        <div class="input-list">
+            <div class="input-item" onclick="showInputForm('milk')">
+                <div class="input-icon milk">🍼</div>
+                <div class="input-content">
+                    <div class="input-title">喂奶</div>
+                    <div class="input-subtitle">奶粉</div>
+                </div>
+                <div class="input-arrow">›</div>
+            </div>
+            <div class="input-item" onclick="showInputForm('food')">
+                <div class="input-icon food">🍚</div>
+                <div class="input-content">
+                    <div class="input-title">辅食</div>
+                    <div class="input-subtitle">记录宝宝辅食</div>
+                </div>
+                <div class="input-arrow">›</div>
+            </div>
+            <div class="input-item" onclick="showInputForm('poop')">
+                <div class="input-icon poop">💩</div>
+                <div class="input-content">
+                    <div class="input-title">换尿布</div>
+                    <div class="input-subtitle">记录排便情况</div>
+                </div>
+                <div class="input-arrow">›</div>
+            </div>
+            <div class="input-item" onclick="showInputForm('sleep')">
+                <div class="input-icon sleep">😴</div>
+                <div class="input-content">
+                    <div class="input-title">睡眠</div>
+                    <div class="input-subtitle">记录睡眠时间</div>
+                </div>
+                <div class="input-arrow">›</div>
+            </div>
+        </div>
+        
+        <div class="input-list">
+            <div class="input-item" onclick="showInputForm('photo')">
+                <div class="input-icon photo">📸</div>
+                <div class="input-content">
+                    <div class="input-title">照片</div>
+                    <div class="input-subtitle">从相册添加照片</div>
+                </div>
+                <div class="input-arrow">›</div>
+            </div>
+            <div class="input-item" onclick="showInputForm('milestone')">
+                <div class="input-icon milestone">🎯</div>
+                <div class="input-content">
+                    <div class="input-title">里程碑</div>
+                    <div class="input-subtitle">记录重要时刻</div>
+                </div>
+                <div class="input-arrow">›</div>
+            </div>
+            <div class="input-item" onclick="showInputForm('growth')">
+                <div class="input-icon other">📏</div>
+                <div class="input-content">
+                    <div class="input-title">成长数据</div>
+                    <div class="input-subtitle">身高、体重、头围</div>
+                </div>
+                <div class="input-arrow">›</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- ========== 日历页面 ========== -->
+    <div class="page" id="page-calendar">
+        <div class="today-header">
+            <div class="today-title">日历</div>
+        </div>
+        
+        <div class="calendar-page">
+            <!-- 月历 -->
+            <div class="calendar-sheet" style="margin: 15px; box-shadow: var(--shadow);">
+                <div class="calendar-header">
+                    <div class="calendar-month-year" id="calendar-month-year">2026年1月</div>
+                    <div class="calendar-nav">
+                        <div class="calendar-nav-btn" onclick="changeCalendarMonth(-1)">‹</div>
+                        <div class="calendar-nav-btn" onclick="changeCalendarMonth(1)">›</div>
+                    </div>
+                </div>
+                <div class="calendar-grid" id="calendar-grid">
+                    <!-- JS生成 -->
+                </div>
+            </div>
+            
+            <!-- 里程碑时间轴 -->
+            <div class="timeline-section" style="margin: 15px;">
+                <div class="photo-section-header">
+                    <div class="photo-section-title">🎯 里程碑</div>
+                </div>
+                <div class="milestone-timeline" id="milestone-timeline">
+                    <!-- JS生成 -->
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- ========== 成长页面 ========== -->
+    <div class="page" id="page-growth">
+        <div class="today-header">
+            <div class="today-title">成长</div>
+        </div>
+        
+        <!-- 喝奶统计 -->
+        <div class="chart-container">
+            <div class="chart-title">🍼 喝奶统计</div>
+            <div class="period-selector">
+                <div class="period-btn active" onclick="changePeriod(7)">7天</div>
+                <div class="period-btn" onclick="changePeriod(14)">14天</div>
+                <div class="period-btn" onclick="changePeriod(30)">30天</div>
+            </div>
+            <canvas id="milk-chart" width="350" height="200"></canvas>
+        </div>
+        
+        <!-- 身高体重曲线 -->
+        <div class="chart-container">
+            <div class="chart-title">📏 身高体重曲线</div>
+            <canvas id="growth-chart" width="350" height="200"></canvas>
+        </div>
+        
+        <!-- WHO对比 -->
+        <div class="chart-container">
+            <div class="chart-title">📊 WHO标准对比</div>
+            <canvas id="who-chart" width="350" height="200"></canvas>
+        </div>
+    </div>
+    
+    <!-- ========== 底部导航栏 ========== -->
     <div class="bottom-nav">
-        <div class="nav-item active" onclick="switchTab('milk')">
-            <div class="nav-icon">🍼</div>
-            <div class="nav-label">喂奶</div>
+        <div class="nav-item active" onclick="switchPage('today')">
+            <div class="nav-icon">📅</div>
+            <div class="nav-label">今日</div>
         </div>
-        <div class="nav-item" onclick="switchTab('photo')">
-            <div class="nav-icon">📸</div>
-            <div class="nav-label">照片</div>
+        <div class="nav-item" onclick="switchPage('input')">
+            <div class="nav-icon">✏️</div>
+            <div class="nav-label">输入</div>
         </div>
-        <div class="nav-item" onclick="openSettings()">
-            <div class="nav-icon">⚙️</div>
-            <div class="nav-label">设置</div>
+        <div class="nav-item" onclick="switchPage('calendar')">
+            <div class="nav-icon">📆</div>
+            <div class="nav-label">日历</div>
+        </div>
+        <div class="nav-item" onclick="switchPage('growth')">
+            <div class="nav-label">成长</div>
         </div>
     </div>
     
-    <!-- 设置模态框 -->
-    <div class="modal" id="settings-modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>设置</h3>
-                <span class="modal-close" onclick="closeSettings()">&times;</span>
+    <!-- ========== 时间选择器 ========== -->
+    <div class="time-picker-overlay" id="time-picker">
+        <div class="time-picker-sheet">
+            <div class="time-picker-header">
+                <div class="time-picker-title">选择时间</div>
+                <div class="time-picker-done" onclick="closeTimePicker()">完成</div>
             </div>
-            <div class="modal-body">
-                <div class="settings-item">
-                    <span>出生日期</span>
-                    <input type="date" class="form-input" id="setting-birth-date" value="{{ birth_date }}" style="width: auto;">
+            <div class="time-picker-wheels">
+                <div class="time-wheel" id="hour-wheel">
+                    <!-- JS生成小时 -->
                 </div>
-                <div class="settings-item">
-                    <span>数据同步</span>
-                    <button class="btn btn-secondary" onclick="refreshData()">立即刷新</button>
+                <div class="time-wheel-separator">:</div>
+                <div class="time-wheel" id="minute-wheel">
+                    <!-- JS生成分钟 -->
                 </div>
-                <div style="padding: 15px;">
-                    <button class="btn btn-primary" onclick="saveSettings()">保存设置</button>
+                <div class="time-picker-indicator"></div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- ========== 日期选择器 ========== -->
+    <div class="date-picker-calendar" id="date-picker">
+        <div class="calendar-sheet" style="width: 90%; max-width: 360px;">
+            <div class="calendar-header">
+                <div class="calendar-month-year" id="picker-month-year">2026年1月</div>
+                <div class="calendar-nav">
+                    <div class="calendar-nav-btn" onclick="changePickerMonth(-1)">‹</div>
+                    <div class="calendar-nav-btn" onclick="changePickerMonth(1)">›</div>
                 </div>
+            </div>
+            <div class="calendar-grid" id="picker-grid">
+                <!-- JS生成 -->
+            </div>
+            <div style="display: flex; gap: 10px; margin-top: 15px;">
+                <button class="btn btn-secondary" onclick="closeDatePicker()" style="flex: 1;">取消</button>
+                <button class="btn btn-primary" onclick="confirmDatePicker()" style="flex: 1;">确定</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- ========== 输入表单弹窗 ========== -->
+    <div class="date-picker-calendar" id="input-modal">
+        <div class="calendar-sheet" style="width: 90%; max-width: 400px; max-height: 80vh; overflow-y: auto;">
+            <div class="time-picker-header">
+                <div class="time-picker-title" id="input-modal-title">记录</div>
+                <div class="time-picker-done" onclick="closeInputModal()">取消</div>
+            </div>
+            <div id="input-form-container">
+                <!-- 动态生成表单 -->
             </div>
         </div>
     </div>
@@ -1146,22 +1654,797 @@
             document.querySelectorAll('.tab-content').forEach(content => {
                 content.classList.remove('active');
             });
-            document.getElementById(`tab-${tabName}`).classList.add('active');
             
-            // 更新底部导航
-            document.querySelectorAll('.nav-item').forEach((item, idx) => {
-                item.classList.remove('active');
-            });
+            const targetTab = document.getElementById(`tab-${tabName}`);
+            if (targetTab) {
+                targetTab.classList.add('active');
+            }
             
-            // 刷新数据
-            if (currentData[tabName]) {
+            // 特殊处理概览页面
+            if (tabName === 'overview') {
+                renderTimelineAll();
+                updateOverviewStats();
+            } else if (currentData[tabName]) {
                 renderRecords(tabName, currentData[tabName]);
             }
         }
         
+        // 渲染概览时间轴
+        function renderTimelineAll() {
+            const container = document.getElementById('timeline-all');
+            if (!container) return;
+            
+            // 收集所有记录
+            const allRecords = [];
+            const typeConfig = {
+                milk: { icon: '🍼', color: 'milk', name: '喂奶' },
+                food: { icon: '🍚', color: 'food', name: '辅食' },
+                poop: { icon: '💩', color: 'poop', name: '换尿布' },
+                sleep: { icon: '😴', color: 'sleep', name: '睡眠' },
+                milestone: { icon: '🎯', color: 'milestone', name: '里程碑' },
+                other: { icon: '📝', color: 'milk', name: '其他' }
+            };
+            
+            Object.keys(currentData).forEach(type => {
+                if (typeConfig[type] && Array.isArray(currentData[type])) {
+                    currentData[type].forEach(record => {
+                        allRecords.push({ type, ...record });
+                    });
+                }
+            });
+            
+            // 按时间排序（最新的在前面）
+            allRecords.sort((a, b) => {
+                const timeA = a.timestamp || a.date || a.start_time || '';
+                const timeB = b.timestamp || b.date || b.start_time || '';
+                return timeB.localeCompare(timeA);
+            });
+            
+            // 只显示今天和最近的记录
+            const today = new Date().toISOString().split('T')[0];
+            const recentRecords = allRecords.slice(0, 20);
+            
+            if (recentRecords.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📝</div>
+                        <div>今天还没有记录</div>
+                    </div>
+                `;
+                return;
+            }
+            
+            let html = '';
+            recentRecords.forEach(record => {
+                const config = typeConfig[record.type] || typeConfig.other;
+                const time = record.timestamp?.split(' ')[1]?.substring(0, 5) || 
+                           record.date || 
+                           record.start_time?.split(' ')[1]?.substring(0, 5) || '';
+                
+                let desc = '';
+                if (record.type === 'milk') {
+                    desc = `${record.amount_ml}ml ${record.milk_type || ''}`;
+                } else if (record.type === 'sleep') {
+                    desc = `睡了 ${record.duration_min} 分钟`;
+                } else if (record.type === 'poop') {
+                    desc = `${record.poop_type || ''} ${record.color || ''}`;
+                } else if (record.type === 'food') {
+                    desc = `${record.food_type} ${record.amount || ''}`;
+                } else if (record.type === 'milestone') {
+                    desc = record.description;
+                }
+                
+                html += `
+                    <div class="timeline-item">
+                        <div class="timeline-icon ${config.color}">${config.icon}</div>
+                        <div class="timeline-content">
+                            <div class="timeline-title">${config.name} ${desc}</div>
+                            <div class="timeline-time">${time}</div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+        }
+        
+        // ========== 新页面切换 ==========
+        function switchPage(pageName) {
+            // 更新底部导航
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            document.querySelector(`.nav-item[onclick="switchPage('${pageName}')"]`)?.classList.add('active');
+            
+            // 更新页面显示
+            document.querySelectorAll('.page').forEach(page => {
+                page.classList.remove('active');
+            });
+            document.getElementById(`page-${pageName}`)?.classList.add('active');
+            
+            // 页面特定初始化
+            if (pageName === 'today') {
+                updateTodayStats();
+                renderTodayTimeline();
+            } else if (pageName === 'calendar') {
+                renderCalendar();
+                renderMilestoneTimeline();
+            } else if (pageName === 'growth') {
+                renderMilkChart();
+                renderGrowthChart();
+                renderWhoChart();
+            }
+        }
+        
+        // ========== 今日页面 ==========
+        function updateTodayStats() {
+            const todayStr = getTodayStr();
+            
+            // 计算今日奶量
+            let milkTotal = 0;
+            if (currentData.milk) {
+                currentData.milk.forEach(r => {
+                    if (r.timestamp?.startsWith(todayStr)) {
+                        milkTotal += parseInt(r.amount_ml) || 0;
+                    }
+                });
+            }
+            
+            // 计算今日睡眠
+            let sleepTotal = 0;
+            if (currentData.sleep) {
+                currentData.sleep.forEach(r => {
+                    if (r.start_time?.startsWith(todayStr)) {
+                        sleepTotal += parseInt(r.duration_min) || 0;
+                    }
+                });
+            }
+            
+            // 计算今日排便
+            let poopCount = 0;
+            if (currentData.poop) {
+                currentData.poop.forEach(r => {
+                    if (r.timestamp?.startsWith(todayStr)) {
+                        poopCount++;
+                    }
+                });
+            }
+            
+            // 更新显示
+            const milkEl = document.getElementById('today-milk');
+            const sleepEl = document.getElementById('today-sleep');
+            const poopEl = document.getElementById('today-diaper');
+            
+            if (milkEl) milkEl.textContent = milkTotal;
+            if (sleepEl) sleepEl.textContent = (sleepTotal / 60).toFixed(1);
+            if (poopEl) poopEl.textContent = poopCount;
+        }
+        
+        function renderTodayTimeline() {
+            const container = document.getElementById('today-timeline');
+            if (!container) return;
+            
+            const todayStr = getTodayStr();
+            const typeConfig = {
+                milk: { icon: '🍼', color: 'milk', name: '喂奶' },
+                food: { icon: '🍚', color: 'food', name: '辅食' },
+                poop: { icon: '💩', color: 'poop', name: '换尿布' },
+                sleep: { icon: '😴', color: 'sleep', name: '睡眠' },
+                milestone: { icon: '🎯', color: 'milestone', name: '里程碑' }
+            };
+            
+            // 收集今日记录
+            const todayRecords = [];
+            Object.keys(currentData).forEach(type => {
+                if (typeConfig[type] && Array.isArray(currentData[type])) {
+                    currentData[type].forEach(record => {
+                        const time = record.timestamp || record.date || record.start_time;
+                        if (time?.startsWith(todayStr)) {
+                            todayRecords.push({ type, ...record });
+                        }
+                    });
+                }
+            });
+            
+            // 按时间排序
+            todayRecords.sort((a, b) => {
+                const timeA = a.timestamp || a.date || a.start_time || '';
+                const timeB = b.timestamp || b.date || b.start_time || '';
+                return timeB.localeCompare(timeA);
+            });
+            
+            if (todayRecords.length === 0) {
+                container.innerHTML = `
+                    <div class="timeline-item" onclick="quickAdd('milk')">
+                        <div class="timeline-icon milk">🍼</div>
+                        <div class="timeline-content">
+                            <div class="timeline-title">记录喂奶</div>
+                        </div>
+                        <div class="input-arrow">›</div>
+                    </div>
+                    <div class="timeline-item" onclick="quickAdd('sleep')">
+                        <div class="timeline-icon sleep">😴</div>
+                        <div class="timeline-content">
+                            <div class="timeline-title">记录睡眠</div>
+                        </div>
+                        <div class="input-arrow">›</div>
+                    </div>
+                    <div class="timeline-item" onclick="quickAdd('poop')">
+                        <div class="timeline-icon poop">💩</div>
+                        <div class="timeline-content">
+                            <div class="timeline-title">记录换尿布</div>
+                        </div>
+                        <div class="input-arrow">›</div>
+                    </div>
+                `;
+                return;
+            }
+            
+            let html = '';
+            todayRecords.forEach(record => {
+                const config = typeConfig[record.type];
+                const time = record.timestamp?.split(' ')[1]?.substring(0, 5) || 
+                           record.start_time?.split(' ')[1]?.substring(0, 5) || '';
+                
+                let desc = '';
+                if (record.type === 'milk') desc = `${record.amount_ml}ml`;
+                else if (record.type === 'sleep') desc = `睡了 ${record.duration_min} 分钟`;
+                else if (record.type === 'poop') desc = record.poop_type || '排便';
+                else if (record.type === 'food') desc = record.food_type || '辅食';
+                
+                html += `
+                    <div class="timeline-item">
+                        <div class="timeline-icon ${config.color}">${config.icon}</div>
+                        <div class="timeline-content">
+                            <div class="timeline-title">${config.name} ${desc}</div>
+                            <div class="timeline-time">${time}</div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+        }
+        
         function quickAdd(type) {
-            switchTab(type);
-            showToast(`请填写${type === 'milk' ? '喂奶' : type === 'food' ? '辅食' : type === 'poop' ? '排便' : '睡眠'}信息`);
+            switchPage('input');
+            showInputForm(type);
+        }
+        
+        // ========== 时间选择器 ==========
+        let currentTimePickerCallback = null;
+        
+        function initTimePicker() {
+            const hourWheel = document.getElementById('hour-wheel');
+            const minuteWheel = document.getElementById('minute-wheel');
+            
+            // 生成小时选项 (00-23)
+            let hourHtml = '<div class="time-wheel-item"></div>';
+            for (let i = 0; i < 24; i++) {
+                hourHtml += `<div class="time-wheel-item" data-value="${String(i).padStart(2,'0')}">${String(i).padStart(2,'0')}</div>`;
+            }
+            hourHtml += '<div class="time-wheel-item"></div>';
+            hourWheel.innerHTML = hourHtml;
+            
+            // 生成分钟选项 (00-59)
+            let minuteHtml = '<div class="time-wheel-item"></div>';
+            for (let i = 0; i < 60; i++) {
+                minuteHtml += `<div class="time-wheel-item" data-value="${String(i).padStart(2,'0')}">${String(i).padStart(2,'0')}</div>`;
+            }
+            minuteHtml += '<div class="time-wheel-item"></div>';
+            minuteWheel.innerHTML = minuteHtml;
+        }
+        
+        function showTimePicker(callback) {
+            currentTimePickerCallback = callback;
+            document.getElementById('time-picker').classList.add('active');
+            
+            // 设置当前时间
+            const now = new Date();
+            const hour = now.getHours();
+            const minute = now.getMinutes();
+            
+            const hourWheel = document.getElementById('hour-wheel');
+            const minuteWheel = document.getElementById('minute-wheel');
+            
+            hourWheel.scrollTop = (hour + 1) * 40 - 100;
+            minuteWheel.scrollTop = (minute + 1) * 40 - 100;
+        }
+        
+        function closeTimePicker() {
+            const hourWheel = document.getElementById('hour-wheel');
+            const minuteWheel = document.getElementById('minute-wheel');
+            
+            // 获取选中的值
+            const hourIdx = Math.round(hourWheel.scrollTop / 40);
+            const minuteIdx = Math.round(minuteWheel.scrollTop / 40);
+            
+            const hours = document.querySelectorAll('#hour-wheel .time-wheel-item');
+            const minutes = document.querySelectorAll('#minute-wheel .time-wheel-item');
+            
+            const hour = hours[hourIdx + 1]?.dataset.value || '00';
+            const minute = minutes[minuteIdx + 1]?.dataset.value || '00';
+            
+            document.getElementById('time-picker').classList.remove('active');
+            
+            if (currentTimePickerCallback) {
+                currentTimePickerCallback(`${hour}:${minute}`);
+            }
+        }
+        
+        // ========== 日期选择器 ==========
+        let currentPickerDate = new Date();
+        let datePickerCallback = null;
+        
+        function showDatePicker(callback) {
+            datePickerCallback = callback;
+            document.getElementById('date-picker').classList.add('active');
+            renderPickerCalendar();
+        }
+        
+        function closeDatePicker() {
+            document.getElementById('date-picker').classList.remove('active');
+        }
+        
+        function confirmDatePicker() {
+            if (datePickerCallback) {
+                datePickerCallback(currentPickerDate);
+            }
+            closeDatePicker();
+        }
+        
+        function changePickerMonth(delta) {
+            currentPickerDate.setMonth(currentPickerDate.getMonth() + delta);
+            renderPickerCalendar();
+        }
+        
+        function renderPickerCalendar() {
+            const year = currentPickerDate.getFullYear();
+            const month = currentPickerDate.getMonth();
+            
+            document.getElementById('picker-month-year').textContent = 
+                `${year}年${month + 1}月`;
+            
+            const firstDay = new Date(year, month, 1).getDay();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            const daysInPrevMonth = new Date(year, month, 0).getDate();
+            
+            let html = '';
+            
+            // 星期标题
+            ['日', '一', '二', '三', '四', '五', '六'].forEach(day => {
+                html += `<div class="calendar-day-header">${day}</div>`;
+            });
+            
+            // 上月日期
+            for (let i = firstDay - 1; i >= 0; i--) {
+                html += `<div class="calendar-day other-month">${daysInPrevMonth - i}</div>`;
+            }
+            
+            // 当月日期
+            for (let i = 1; i <= daysInMonth; i++) {
+                const isToday = i === new Date().getDate() && 
+                               month === new Date().getMonth() && 
+                               year === new Date().getFullYear();
+                const isSelected = i === currentPickerDate.getDate();
+                
+                html += `<div class="calendar-day ${isToday ? 'active' : ''} ${isSelected ? 'active' : ''}" 
+                              onclick="selectPickerDate(${i})">${i}</div>`;
+            }
+            
+            // 下月日期
+            const remainingCells = 42 - (firstDay + daysInMonth);
+            for (let i = 1; i <= remainingCells; i++) {
+                html += `<div class="calendar-day other-month">${i}</div>`;
+            }
+            
+            document.getElementById('picker-grid').innerHTML = html;
+        }
+        
+        function selectPickerDate(day) {
+            currentPickerDate.setDate(day);
+            renderPickerCalendar();
+        }
+        
+        // ========== 输入表单 ==========
+        function showInputForm(type) {
+            const modal = document.getElementById('input-modal');
+            const title = document.getElementById('input-modal-title');
+            const container = document.getElementById('input-form-container');
+            
+            const titles = {
+                milk: '喂奶',
+                food: '辅食',
+                poop: '换尿布',
+                sleep: '睡眠',
+                photo: '照片',
+                milestone: '里程碑',
+                growth: '成长数据'
+            };
+            
+            title.textContent = `记录${titles[type] || '记录'}`;
+            
+            // 获取当前日期和时间
+            const today = getTodayStr();
+            const now = new Date();
+            const currentTime = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+            
+            let formHtml = '';
+            
+            if (type === 'milk') {
+                formHtml = `
+                    <div class="form-group">
+                        <label class="form-label">日期</label>
+                        <div class="date-picker-btn" onclick="selectDateForInput('milk')">
+                            <span id="milk-date-display">${today}</span>
+                            <input type="hidden" id="milk-date" value="${today}">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">时间</label>
+                        <div class="date-picker-btn" onclick="selectTimeForInput('milk')">
+                            <span id="milk-time-display">${currentTime}</span>
+                            <input type="hidden" id="milk-time" value="${currentTime}">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">奶量 (ml)</label>
+                        <input type="number" class="form-input" id="milk-amount" placeholder="例如: 120">
+                    </div>
+                    <button class="btn btn-primary btn-full" onclick="submitMilk()">保存</button>
+                `;
+            } else if (type === 'food') {
+                formHtml = `
+                    <div class="form-group">
+                        <label class="form-label">日期</label>
+                        <div class="date-picker-btn" onclick="selectDateForInput('food')">
+                            <span id="food-date-display">${today}</span>
+                            <input type="hidden" id="food-date" value="${today}">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">时间</label>
+                        <div class="date-picker-btn" onclick="selectTimeForInput('food')">
+                            <span id="food-time-display">${currentTime}</span>
+                            <input type="hidden" id="food-time" value="${currentTime}">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">食物类型</label>
+                        <input type="text" class="form-input" id="food-type" placeholder="例如: 米粉、果泥">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">摄入量</label>
+                        <input type="text" class="form-input" id="food-amount" placeholder="例如: 50g, 半碗">
+                    </div>
+                    <button class="btn btn-primary btn-full" onclick="submitFood()">保存</button>
+                `;
+            } else if (type === 'poop') {
+                formHtml = `
+                    <div class="form-group">
+                        <label class="form-label">日期</label>
+                        <div class="date-picker-btn" onclick="selectDateForInput('poop')">
+                            <span id="poop-date-display">${today}</span>
+                            <input type="hidden" id="poop-date" value="${today}">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">时间</label>
+                        <div class="date-picker-btn" onclick="selectTimeForInput('poop')">
+                            <span id="poop-time-display">${currentTime}</span>
+                            <input type="hidden" id="poop-time" value="${currentTime}">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">类型</label>
+                            <select class="form-input" id="poop-type">
+                                <option value="正常">正常</option>
+                                <option value="稀便">稀便</option>
+                                <option value="干硬">干硬</option>
+                                <option value="水样">水样</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">颜色</label>
+                            <select class="form-input" id="poop-color">
+                                <option value="黄色">黄色</option>
+                                <option value="绿色">绿色</option>
+                                <option value="棕色">棕色</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button class="btn btn-primary btn-full" onclick="submitPoop()">保存</button>
+                `;
+            } else if (type === 'sleep') {
+                formHtml = `
+                    <div class="form-group">
+                        <label class="form-label">日期</label>
+                        <div class="date-picker-btn" onclick="selectDateForInput('sleep')">
+                            <span id="sleep-date-display">${today}</span>
+                            <input type="hidden" id="sleep-date" value="${today}">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">开始时间</label>
+                            <div class="date-picker-btn" onclick="selectTimeForInput('sleep-start')">
+                                <span id="sleep-start-display">${currentTime}</span>
+                                <input type="hidden" id="sleep-start" value="${currentTime}">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">结束时间</label>
+                            <div class="date-picker-btn" onclick="selectTimeForInput('sleep-end')">
+                                <span id="sleep-end-display">${currentTime}</span>
+                                <input type="hidden" id="sleep-end" value="${currentTime}">
+                            </div>
+                        </div>
+                    </div>
+                    <button class="btn btn-primary btn-full" onclick="submitSleep()">保存</button>
+                `;
+            } else if (type === 'milestone') {
+                formHtml = `
+                    <div class="form-group">
+                        <label class="form-label">日期</label>
+                        <div class="date-picker-btn" onclick="selectDateForInput('milestone')">
+                            <span id="milestone-date-display">${today}</span>
+                            <input type="hidden" id="milestone-date" value="${today}">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">类别</label>
+                        <select class="form-input" id="milestone-category">
+                            <option value="大运动">大运动</option>
+                            <option value="精细动作">精细动作</option>
+                            <option value="语言">语言</option>
+                            <option value="认知">认知</option>
+                            <option value="社交">社交</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">描述</label>
+                        <textarea class="form-input" id="milestone-desc" rows="3" placeholder="记录重要时刻..."></textarea>
+                    </div>
+                    <button class="btn btn-primary btn-full" onclick="submitMilestone()">保存</button>
+                `;
+            }
+            
+            container.innerHTML = formHtml;
+            modal.classList.add('active');
+        }
+        
+        function closeInputModal() {
+            document.getElementById('input-modal').classList.remove('active');
+        }
+        
+        function selectDateForInput(type) {
+            showDatePicker((date) => {
+                const dateStr = `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;
+                const display = document.getElementById(`${type}-date-display`);
+                const input = document.getElementById(`${type}-date`);
+                if (display) display.textContent = dateStr;
+                if (input) input.value = dateStr;
+            });
+        }
+        
+        function selectTimeForInput(type) {
+            showTimePicker((time) => {
+                const isRange = type.includes('-start') || type.includes('-end');
+                const baseType = isRange ? type.split('-')[0] : type;
+                const suffix = isRange ? type.split('-')[1] : 'time';
+                
+                const display = document.getElementById(`${baseType}-${suffix}-display`);
+                const input = document.getElementById(`${baseType}-${suffix}`);
+                if (display) display.textContent = time;
+                if (input) input.value = time;
+            });
+        }
+        
+        // ========== 日历页面 ==========
+        let currentCalendarDate = new Date();
+        
+        function changeCalendarMonth(delta) {
+            currentCalendarDate.setMonth(currentCalendarDate.getMonth() + delta);
+            renderCalendar();
+        }
+        
+        function renderCalendar() {
+            const year = currentCalendarDate.getFullYear();
+            const month = currentCalendarDate.getMonth();
+            
+            document.getElementById('calendar-month-year').textContent = 
+                `${year}年${month + 1}月`;
+            
+            const firstDay = new Date(year, month, 1).getDay();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            const daysInPrevMonth = new Date(year, month, 0).getDate();
+            
+            let html = '';
+            
+            // 星期标题
+            ['日', '一', '二', '三', '四', '五', '六'].forEach(day => {
+                html += `<div class="calendar-day-header">${day}</div>`;
+            });
+            
+            // 上月日期
+            for (let i = firstDay - 1; i >= 0; i--) {
+                html += `<div class="calendar-day other-month">${daysInPrevMonth - i}</div>`;
+            }
+            
+            // 当月日期
+            for (let i = 1; i <= daysInMonth; i++) {
+                const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(i).padStart(2,'0')}`;
+                const hasPhoto = currentData.photo?.some(p => p.timestamp?.startsWith(dateStr));
+                
+                html += `<div class="calendar-day ${hasPhoto ? 'has-photo' : ''}" 
+                              onclick="showDateDetails('${dateStr}')">${i}</div>`;
+            }
+            
+            // 下月日期
+            const remainingCells = 42 - (firstDay + daysInMonth);
+            for (let i = 1; i <= remainingCells; i++) {
+                html += `<div class="calendar-day other-month">${i}</div>`;
+            }
+            
+            document.getElementById('calendar-grid').innerHTML = html;
+        }
+        
+        function renderMilestoneTimeline() {
+            const container = document.getElementById('milestone-timeline');
+            if (!container || !currentData.milestone) return;
+            
+            let html = '';
+            currentData.milestone.slice().reverse().forEach(m => {
+                html += `
+                    <div class="milestone-item">
+                        <div class="milestone-date">${m.date}</div>
+                        <div class="milestone-content">
+                            <div class="timeline-title">${m.category}</div>
+                            <div class="timeline-desc">${m.description}</div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html || '<div style="text-align: center; color: var(--text-light); padding: 20px;">暂无里程碑记录</div>';
+        }
+        
+        function showDateDetails(date) {
+            // 显示选中日期的详情
+            showToast(`${date} 的记录详情功能开发中`);
+        }
+        
+        // ========== 成长页面 ==========
+        let currentPeriod = 7;
+        
+        function changePeriod(days) {
+            currentPeriod = days;
+            document.querySelectorAll('.period-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            renderMilkChart();
+        }
+        
+        function renderMilkChart() {
+            const canvas = document.getElementById('milk-chart');
+            if (!canvas || !currentData.milk) return;
+            
+            const ctx = canvas.getContext('2d');
+            const width = canvas.width;
+            const height = canvas.height;
+            
+            // 清空画布
+            ctx.clearRect(0, 0, width, height);
+            
+            // 计算最近7天的奶量
+            const days = [];
+            const today = new Date();
+            for (let i = currentPeriod - 1; i >= 0; i--) {
+                const d = new Date(today);
+                d.setDate(d.getDate() - i);
+                days.push(d);
+            }
+            
+            const dailyMilk = days.map(d => {
+                const dateStr = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+                let total = 0;
+                currentData.milk.forEach(record => {
+                    if (record.timestamp?.startsWith(dateStr)) {
+                        total += parseInt(record.amount_ml) || 0;
+                    }
+                });
+                return { date: d.getDate(), amount: total };
+            });
+            
+            // 绘制柱状图
+            const barWidth = (width - 40) / dailyMilk.length;
+            const maxAmount = Math.max(...dailyMilk.map(d => d.amount), 500);
+            
+            dailyMilk.forEach((d, i) => {
+                const barHeight = (d.amount / maxAmount) * (height - 60);
+                const x = 20 + i * barWidth + barWidth * 0.2;
+                const y = height - 40 - barHeight;
+                
+                // 绘制柱子
+                ctx.fillStyle = '#007AFF';
+                ctx.fillRect(x, y, barWidth * 0.6, barHeight);
+                
+                // 绘制日期
+                ctx.fillStyle = '#666';
+                ctx.font = '10px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText(`${d.date}日`, x + barWidth * 0.3, height - 20);
+            });
+        }
+        
+        function renderGrowthChart() {
+            const canvas = document.getElementById('growth-chart');
+            if (!canvas || !currentData.who) return;
+            
+            const ctx = canvas.getContext('2d');
+            const width = canvas.width;
+            const height = canvas.height;
+            
+            ctx.clearRect(0, 0, width, height);
+            
+            // 绘制身高体重曲线
+            ctx.strokeStyle = '#34C759';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            
+            // 简化的示例数据
+            const points = [
+                { month: 0, height: 50 },
+                { month: 1, height: 54 },
+                { month: 2, height: 58 },
+                { month: 3, height: 61 },
+                { month: 6, height: 67 },
+            ];
+            
+            points.forEach((p, i) => {
+                const x = 40 + (p.month / 12) * (width - 80);
+                const y = height - 40 - (p.height / 80) * (height - 80);
+                if (i === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            });
+            
+            ctx.stroke();
+        }
+        
+        function renderWhoChart() {
+            const canvas = document.getElementById('who-chart');
+            if (!canvas || !currentData.who) return;
+            
+            const ctx = canvas.getContext('2d');
+            const width = canvas.width;
+            const height = canvas.height;
+            
+            ctx.clearRect(0, 0, width, height);
+            
+            // 绘制WHO标准对比曲线
+            ctx.strokeStyle = '#FF9500';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            
+            // WHO标准线 (示例)
+            const whoPoints = [
+                { month: 0, height: 50 },
+                { month: 3, height: 61 },
+                { month: 6, height: 67 },
+                { month: 9, height: 72 },
+                { month: 12, height: 76 },
+            ];
+            
+            whoPoints.forEach((p, i) => {
+                const x = 40 + (p.month / 12) * (width - 80);
+                const y = height - 40 - (p.height / 80) * (height - 80);
+                if (i === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            });
+            
+            ctx.stroke();
         }
         
         // ========== 数据操作 ==========
@@ -1171,26 +2454,52 @@
                 if (!res.ok) throw new Error('获取数据失败');
                 currentData = await res.json();
                 
-                // 渲染各类型记录
-                Object.keys(currentData).forEach(key => {
-                    if (key === 'who' || key === 'age_days' || key === 'age_months' || key === 'today') return;
-                    
-                    if (key === 'photo') {
-                        renderPhotoGrid(currentData[key]);
-                    } else {
-                        renderRecords(key, currentData[key]);
-                    }
-                });
+                // 更新今日页面
+                updateTodayStats();
+                renderTodayTimeline();
+                renderTodayPhotos();
                 
-                // 更新统计
-                updateStats();
+                // 更新日历页面
+                renderCalendar();
+                renderMilestoneTimeline();
                 
-                // 渲染成长图表
+                // 更新成长页面
+                renderMilkChart();
                 renderGrowthChart();
+                renderWhoChart();
+                
+                showToast('数据已更新');
             } catch (err) {
                 console.error('获取数据错误:', err);
                 showToast('获取数据失败');
             }
+        }
+        
+        function renderTodayPhotos() {
+            const container = document.getElementById('today-photo-grid');
+            if (!container) return;
+            
+            const todayStr = getTodayStr();
+            const todayPhotos = currentData.photo?.filter(p => p.timestamp?.startsWith(todayStr)) || [];
+            
+            if (todayPhotos.length === 0) {
+                container.innerHTML = `
+                    <div class="photo-item" style="display:flex;align-items:center;justify-content:center;color:var(--text-light);grid-column:1/-1;">
+                        今天还没有照片
+                    </div>
+                `;
+                return;
+            }
+            
+            let html = '';
+            todayPhotos.forEach(photo => {
+                html += `
+                    <div class="photo-item" onclick="openImageViewer('${photo.drive_url}')">
+                        <img src="${photo.drive_url}" alt="${photo.caption || ''}" loading="lazy">
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
         }
         
         async function fetchStats() {
@@ -1679,29 +2988,156 @@
             closeSettings();
         }
         
-        // ========== 初始化 ==========
-        document.addEventListener('DOMContentLoaded', () => {
-            setDatetimeInputDefaults();
-            updateDateDisplay();
-            fetchData();
+        // ========== 表单提交 ==========
+        async function submitMilk() {
+            const date = document.getElementById('milk-date').value;
+            const time = document.getElementById('milk-time').value;
+            const amount = document.getElementById('milk-amount').value;
             
-            // 从 localStorage 恢复设置
-            const savedBirthDate = localStorage.getItem('birthDate');
-            if (savedBirthDate) {
-                document.getElementById('setting-birth-date').value = savedBirthDate;
+            if (!amount) {
+                showToast('请输入奶量');
+                return;
             }
             
-            // 绑定标签切换
-            document.querySelectorAll('.tab-btn').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    switchTab(btn.dataset.tab);
+            const data = {
+                type: 'milk',
+                timestamp: `${date} ${time}:00`,
+                amount_ml: amount,
+                milk_type: '奶粉',
+                note: ''
+            };
+            
+            await submitRecord(data, '喂奶');
+        }
+        
+        async function submitFood() {
+            const date = document.getElementById('food-date').value;
+            const time = document.getElementById('food-time').value;
+            const type = document.getElementById('food-type').value;
+            const amount = document.getElementById('food-amount').value;
+            
+            if (!type) {
+                showToast('请输入食物类型');
+                return;
+            }
+            
+            const data = {
+                type: 'food',
+                timestamp: `${date} ${time}:00`,
+                food_type: type,
+                amount: amount,
+                note: ''
+            };
+            
+            await submitRecord(data, '辅食');
+        }
+        
+        async function submitPoop() {
+            const date = document.getElementById('poop-date').value;
+            const time = document.getElementById('poop-time').value;
+            const poopType = document.getElementById('poop-type').value;
+            const color = document.getElementById('poop-color').value;
+            
+            const data = {
+                type: 'poop',
+                timestamp: `${date} ${time}:00`,
+                poop_type: poopType,
+                color: color,
+                note: ''
+            };
+            
+            await submitRecord(data, '换尿布');
+        }
+        
+        async function submitSleep() {
+            const date = document.getElementById('sleep-date').value;
+            const startTime = document.getElementById('sleep-start').value;
+            const endTime = document.getElementById('sleep-end').value;
+            
+            // 计算持续时间
+            const start = new Date(`${date} ${startTime}`);
+            const end = new Date(`${date} ${endTime}`);
+            let durationMin = Math.round((end - start) / 60000);
+            if (durationMin < 0) durationMin += 24 * 60;
+            
+            const data = {
+                type: 'sleep',
+                start_time: `${date} ${startTime}:00`,
+                end_time: `${date} ${endTime}:00`,
+                duration_min: durationMin,
+                note: ''
+            };
+            
+            await submitRecord(data, '睡眠');
+        }
+        
+        async function submitMilestone() {
+            const date = document.getElementById('milestone-date').value;
+            const category = document.getElementById('milestone-category').value;
+            const description = document.getElementById('milestone-desc').value;
+            
+            if (!description) {
+                showToast('请输入描述');
+                return;
+            }
+            
+            const data = {
+                type: 'milestone',
+                date: date,
+                category: category,
+                description: description
+            };
+            
+            await submitRecord(data, '里程碑');
+        }
+        
+        async function submitRecord(data, typeName) {
+            try {
+                const res = await fetch('/api/add', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
                 });
-            });
+                
+                if (!res.ok) throw new Error('保存失败');
+                
+                showToast(`${typeName}记录已保存`);
+                closeInputModal();
+                
+                // 刷新数据
+                await fetchData();
+                
+                // 切换回今日页面
+                if (document.getElementById('page-today').classList.contains('active')) {
+                    updateTodayStats();
+                    renderTodayTimeline();
+                }
+            } catch (err) {
+                console.error('保存错误:', err);
+                showToast('保存失败');
+            }
+        }
+        
+        function addPhoto() {
+            showInputForm('photo');
+        }
+        
+        // ========== 初始化 ==========
+        document.addEventListener('DOMContentLoaded', () => {
+            // 初始化时间选择器
+            initTimePicker();
+            
+            // 默认显示今日页面
+            switchPage('today');
+            
+            // 获取数据
+            fetchData();
         });
         
         // 窗口大小改变时重绘图表
         window.addEventListener('resize', () => {
             renderGrowthChart();
+            renderMilkChart();
         });
     </script>
 </body>
