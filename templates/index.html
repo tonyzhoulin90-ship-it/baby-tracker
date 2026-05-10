@@ -563,7 +563,7 @@
             justify-content: center;
         }
         
-        .image-viewer.show {
+        .image-viewer.show, .image-viewer.active {
             display: flex;
         }
         
@@ -1178,6 +1178,138 @@
             background: var(--primary);
             color: white;
         }
+
+        /* ========== iOS Style Enhancements ========== */
+
+        /* Frosted glass header */
+        .today-header {
+            background: rgba(255,255,255,0.85);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(0,0,0,0.06);
+            padding: 14px 18px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            margin-bottom: 0;
+        }
+
+        /* Overview card with gradient accents */
+        .today-overview {
+            background: var(--card);
+            box-shadow: 0 2px 16px rgba(0,0,0,0.07);
+            margin-top: 12px;
+        }
+
+        .overview-item { position: relative; }
+
+        .overview-value {
+            background: linear-gradient(135deg, var(--primary), #5AC8FA);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        /* Section cards */
+        .photo-section, .timeline-section, .chart-container {
+            box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+            border-radius: 18px;
+        }
+
+        /* Better quick-add buttons */
+        .quick-add-grid .quick-add-btn,
+        .quick-add-btn {
+            border-radius: 14px;
+            transition: transform 0.12s, box-shadow 0.12s;
+        }
+        .quick-add-btn:active { transform: scale(0.93); box-shadow: none; }
+
+        /* Form inputs: animated border */
+        .form-input, select.form-input {
+            border-radius: 10px;
+            border: 1.5px solid var(--border);
+            transition: border-color 0.2s, box-shadow 0.2s;
+            background: #f9f9fb;
+        }
+        .form-input:focus, select.form-input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(0,122,255,0.12);
+            background: #fff;
+        }
+
+        /* Save button */
+        .btn-primary {
+            border-radius: 14px;
+            font-weight: 600;
+            letter-spacing: 0.2px;
+            transition: transform 0.1s, box-shadow 0.1s;
+            box-shadow: 0 3px 10px rgba(0,122,255,0.25);
+        }
+        .btn-primary:active { transform: scale(0.97); box-shadow: none; }
+
+        /* Date picker btn */
+        .date-picker-btn {
+            border-radius: 10px;
+            border: 1.5px solid var(--border);
+            background: #f9f9fb;
+            font-size: 0.95rem;
+        }
+
+        /* Timeline icons with deeper color */
+        .timeline-icon.milk { background: linear-gradient(135deg,#FFE0B2,#FFB74D22); }
+        .timeline-icon.sleep { background: linear-gradient(135deg,#E3F2FD,#90CAF922); }
+        .timeline-icon.poop { background: linear-gradient(135deg,#EFEBE9,#BCAAA422); }
+        .timeline-icon.food { background: linear-gradient(135deg,#E8F5E9,#81C78422); }
+        .timeline-icon.milestone { background: linear-gradient(135deg,#F3E5F5,#CE93D822); }
+
+        /* Timeline edit/delete chips */
+        .timeline-delete {
+            font-size: 0.8rem;
+            border-radius: 8px;
+            padding: 4px 10px;
+            background: #f5f5f7;
+        }
+
+        /* Canvas full width responsive */
+        canvas {
+            width: 100% !important;
+            height: auto !important;
+            display: block;
+        }
+        .chart-container canvas {
+            max-height: 200px;
+        }
+
+        /* Input modal sheet */
+        .calendar-sheet {
+            box-shadow: 0 -4px 30px rgba(0,0,0,0.12);
+        }
+
+        /* Stepper buttons */
+        .stepper-btn {
+            border-radius: 50%;
+            border: 1.5px solid var(--border);
+            background: #f5f5f7;
+            transition: background 0.15s;
+        }
+        .stepper-btn:active { background: var(--border); }
+
+        /* Bottom nav dot indicator for active */
+        .nav-item.active .nav-icon {
+            filter: none;
+        }
+
+        /* Page slide in */
+        .page.active {
+            animation: pageFadeIn 0.18s ease;
+        }
+        @keyframes pageFadeIn {
+            from { opacity: 0.6; transform: translateY(4px); }
+            to   { opacity: 1;   transform: translateY(0); }
+        }
+
+        /* Growth page no top margin */
+        #page-growth .today-header { margin-bottom: 0; }
     </style>
 </head>
 <body data-age-months="{{ age_months }}" data-age-days="{{ age_days }}" data-birth-date="{{ birth_date }}">
@@ -1380,16 +1512,20 @@
             <canvas id="milk-chart" width="350" height="200"></canvas>
         </div>
         
-        <!-- 身高体重曲线 -->
+        <!-- 体重 -->
         <div class="chart-container">
-            <div class="chart-title">📏 身高体重曲线</div>
-            <canvas id="growth-chart" width="350" height="200"></canvas>
+            <div class="chart-title">⚖️ 体重 (kg)</div>
+            <canvas id="weight-chart" width="350" height="180"></canvas>
         </div>
-        
-        <!-- WHO对比 -->
+        <!-- 身高 -->
         <div class="chart-container">
-            <div class="chart-title">📊 WHO标准对比</div>
-            <canvas id="who-chart" width="350" height="200"></canvas>
+            <div class="chart-title">📏 身高 (cm)</div>
+            <canvas id="height-chart" width="350" height="180"></canvas>
+        </div>
+        <!-- 头围 -->
+        <div class="chart-container">
+            <div class="chart-title">🧠 头围 (cm)</div>
+            <canvas id="head-chart" width="350" height="180"></canvas>
         </div>
     </div>
     
@@ -1480,9 +1616,12 @@
     </div>
 
     <!-- 图片查看器 -->
-    <div class="image-viewer" id="image-viewer" onclick="closeImageViewer()">
-        <span class="image-viewer-close">&times;</span>
-        <img id="viewer-img" src="" alt="">
+    <div class="image-viewer" id="image-viewer">
+        <span class="image-viewer-close" onclick="closeImageViewer()">&times;</span>
+        <img id="viewer-img" src="" alt="" onclick="event.stopPropagation()">
+        <div id="viewer-actions" style="position:absolute;bottom:30px;left:0;right:0;display:flex;justify-content:center;gap:20px;">
+            <button id="viewer-delete-btn" style="display:none;background:rgba(255,59,48,0.85);color:#fff;border:none;border-radius:22px;padding:10px 28px;font-size:1rem;font-weight:600;" onclick="deleteViewedPhoto()">删除照片</button>
+        </div>
     </div>
     
     <!-- Toast 提示 -->
@@ -1560,7 +1699,6 @@
             } else if (pageName === 'growth') {
                 renderMilkChart();
                 renderGrowthChart();
-                renderWhoChart();
             }
         }
         
@@ -1747,12 +1885,14 @@
                     meta = record.description || '';
                 }
 
+                const noteHtml = record.note ? `<div style="font-size:0.78rem;color:#888;margin-top:2px;">💬 ${record.note}</div>` : '';
                 html += `
                     <div class="timeline-item">
                         <div class="timeline-icon ${config.color}">${config.icon}</div>
                         <div class="timeline-content">
                             <div class="timeline-title">${config.name} ${desc}</div>
                             <div class="timeline-meta">${meta}</div>
+                            ${noteHtml}
                         </div>
                         <div style="display:flex;gap:4px;flex-shrink:0;">
                             <div class="timeline-delete" style="color:#007AFF;" onclick="editTimelineRecord(${i}, event)">编辑</div>
@@ -1959,6 +2099,10 @@
                         <label class="form-label">奶量 (ml)</label>
                         <input type="number" class="form-input" id="milk-amount" placeholder="例如: 120">
                     </div>
+                    <div class="form-group">
+                        <label class="form-label">备注 <span style="color:#999;font-weight:400;">(可选)</span></label>
+                        <input type="text" class="form-input" id="milk-note" placeholder="添加备注...">
+                    </div>
                     <button class="btn btn-primary btn-full" onclick="submitMilk()">保存</button>
                 `;
             } else if (type === 'food') {
@@ -1984,6 +2128,10 @@
                     <div class="form-group">
                         <label class="form-label">摄入量</label>
                         <input type="text" class="form-input" id="food-amount" placeholder="例如: 50g, 半碗">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">备注 <span style="color:#999;font-weight:400;">(可选)</span></label>
+                        <input type="text" class="form-input" id="food-note" placeholder="添加备注...">
                     </div>
                     <button class="btn btn-primary btn-full" onclick="submitFood()">保存</button>
                 `;
@@ -2022,6 +2170,10 @@
                             </select>
                         </div>
                     </div>
+                    <div class="form-group">
+                        <label class="form-label">备注 <span style="color:#999;font-weight:400;">(可选)</span></label>
+                        <input type="text" class="form-input" id="poop-note" placeholder="添加备注...">
+                    </div>
                     <button class="btn btn-primary btn-full" onclick="submitPoop()">保存</button>
                 `;
             } else if (type === 'sleep') {
@@ -2048,6 +2200,22 @@
                                 <input type="hidden" id="sleep-end" value="${currentTime}">
                             </div>
                         </div>
+                    </div>
+                    <div class="form-group" style="display:flex;align-items:center;gap:10px;">
+                        <label class="form-label" style="margin:0;">跨日睡眠</label>
+                        <input type="checkbox" id="sleep-overnight" onchange="toggleSleepEndDate()" style="width:20px;height:20px;accent-color:var(--primary);">
+                        <span style="font-size:0.85rem;color:#999;">结束日期在次日</span>
+                    </div>
+                    <div class="form-group" id="sleep-end-date-group" style="display:none;">
+                        <label class="form-label">结束日期</label>
+                        <div class="date-picker-btn" onclick="selectDateForInput('sleep-end-date')">
+                            <span id="sleep-end-date-display">${today}</span>
+                            <input type="hidden" id="sleep-end-date" value="${today}">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">备注 <span style="color:#999;font-weight:400;">(可选)</span></label>
+                        <input type="text" class="form-input" id="sleep-note" placeholder="添加备注...">
                     </div>
                     <button class="btn btn-primary btn-full" onclick="submitSleep()">保存</button>
                 `;
@@ -2115,18 +2283,9 @@
                             <input type="hidden" id="growth-date" value="${today}">
                         </div>
                     </div>
-                    <div class="form-group">
-                        <label class="form-label">体重 (kg)</label>
-                        <input type="number" step="0.01" class="form-input" id="growth-weight" placeholder="例如: 7.5">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">身高 (cm)</label>
-                        <input type="number" step="0.1" class="form-input" id="growth-height" placeholder="例如: 65.5">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">头围 (cm)</label>
-                        <input type="number" step="0.1" class="form-input" id="growth-head" placeholder="例如: 42.0">
-                    </div>
+                    ${makeStepperField('growth-weight', '体重 (kg)', 0, 30, 0.1, '例如: 7.5')}
+                    ${makeStepperField('growth-height', '身高 (cm)', 30, 130, 0.5, '例如: 65.5')}
+                    ${makeStepperField('growth-head', '头围 (cm)', 20, 60, 0.5, '例如: 42.0')}
                     <div class="form-group">
                         <label class="form-label">备注</label>
                         <input type="text" class="form-input" id="growth-note" placeholder="可选备注...">
@@ -2145,6 +2304,33 @@
             }
         }
         
+        function makeStepperField(id, label, min, max, step, placeholder) {
+            return `
+            <div class="form-group">
+                <label class="form-label">${label}</label>
+                <div style="display:flex;align-items:center;gap:8px;">
+                    <button type="button" style="width:38px;height:38px;border-radius:50%;border:1.5px solid var(--border);background:#f5f5f7;font-size:1.3rem;line-height:1;cursor:pointer;" onclick="stepperChange('${id}',-${step},${min},${max},${step})">−</button>
+                    <input type="number" class="form-input" id="${id}" placeholder="${placeholder}" step="${step}" min="${min}" max="${max}" style="text-align:center;flex:1;">
+                    <button type="button" style="width:38px;height:38px;border-radius:50%;border:1.5px solid var(--border);background:#f5f5f7;font-size:1.3rem;line-height:1;cursor:pointer;" onclick="stepperChange('${id}',${step},${min},${max},${step})">+</button>
+                </div>
+            </div>`;
+        }
+
+        function stepperChange(id, delta, min, max, step) {
+            const el = document.getElementById(id);
+            if (!el) return;
+            const decimals = step.toString().includes('.') ? step.toString().split('.')[1].length : 0;
+            let val = parseFloat(el.value || 0) + delta;
+            val = Math.max(min, Math.min(max, parseFloat(val.toFixed(decimals))));
+            el.value = val || '';
+        }
+
+        function toggleSleepEndDate() {
+            const chk = document.getElementById('sleep-overnight');
+            const grp = document.getElementById('sleep-end-date-group');
+            if (grp) grp.style.display = chk?.checked ? 'block' : 'none';
+        }
+
         function closeInputModal() {
             document.getElementById('input-modal').classList.remove('active');
         }
@@ -2319,11 +2505,16 @@
             const canvas = document.getElementById('milk-chart');
             if (!canvas || !currentData.milk) return;
 
+            const dpr = window.devicePixelRatio || 1;
+            const rect = canvas.parentElement.getBoundingClientRect();
+            canvas.width = Math.floor(rect.width * dpr) || 700;
+            canvas.height = Math.floor(200 * dpr);
+            canvas.style.width = '100%'; canvas.style.height = '200px';
             const ctx = canvas.getContext('2d');
-            const width = canvas.width;
-            const height = canvas.height;
+            ctx.scale(dpr, dpr);
+            const width = Math.floor(rect.width) || 350;
+            const height = 200;
 
-            // 清空画布
             ctx.clearRect(0, 0, width, height);
 
             // 计算最近7天的奶量
@@ -2381,7 +2572,95 @@
             ctx.fillText('喝奶量 (ml)', 20, 20);
         }
         
+        // ========== WHO 标准数据 (男宝中位数, 0-24月) ==========
+        const WHO_BOYS = {
+            weight: [3.3,4.5,5.6,6.4,7.0,7.5,7.9,8.3,8.6,8.9,9.2,9.4,9.6,9.9,10.1,10.3,10.5,10.7,10.9,11.1,11.3,11.5,11.8,12.0,12.2],
+            height: [49.9,54.7,58.4,61.4,63.9,65.9,67.6,69.2,70.6,72.0,73.3,74.5,75.7,76.9,78.0,79.1,80.2,81.2,82.3,83.2,84.2,85.1,86.0,86.9,87.8],
+            head:   [34.5,37.3,39.1,40.5,41.6,42.6,43.3,44.0,44.5,45.0,45.5,45.8,46.2,46.5,46.8,47.2,47.4,47.7,47.9,48.1,48.4,48.5,48.7,48.9,49.1]
+        };
+
+        function renderSingleGrowthChart(canvasId, metricKey, color, unit) {
+            const canvas = document.getElementById(canvasId);
+            if (!canvas) return;
+            const dpr = window.devicePixelRatio || 1;
+            const rect = canvas.parentElement.getBoundingClientRect();
+            canvas.width = Math.floor(rect.width * dpr) || 700;
+            canvas.height = Math.floor(180 * dpr);
+            canvas.style.width = '100%'; canvas.style.height = '180px';
+            const ctx = canvas.getContext('2d');
+            ctx.scale(dpr, dpr);
+            const W = Math.floor(rect.width) || 350, H = 180;
+            ctx.clearRect(0, 0, W, H);
+            const pad = { l:42, r:16, t:18, b:30 };
+            const cW = W - pad.l - pad.r, cH = H - pad.t - pad.b;
+
+            const birth = new Date(BIRTH_DATE_STR + 'T00:00:00');
+            const growthData = currentData.growth || [];
+            const pts = growthData.map(r => {
+                const v = parseFloat(r[metricKey]);
+                const m = (new Date(r.date + 'T00:00:00') - birth) / (86400000 * 30.44);
+                return isNaN(v) || v <= 0 ? null : { m, v, date: r.date };
+            }).filter(Boolean);
+
+            const who = WHO_BOYS[metricKey === 'weight_kg' ? 'weight' : metricKey === 'height_cm' ? 'height' : 'head'];
+            const maxM = Math.max(24, ...(pts.map(p => p.m)));
+            const allVals = [...pts.map(p => p.v), ...who];
+            const minV = Math.min(...allVals) * 0.95, maxV = Math.max(...allVals) * 1.05;
+
+            const toX = m => pad.l + (m / maxM) * cW;
+            const toY = v => pad.t + cH - ((v - minV) / (maxV - minV)) * cH;
+
+            // grid
+            ctx.strokeStyle = '#eee'; ctx.lineWidth = 1;
+            for (let i = 0; i <= 4; i++) {
+                const y = pad.t + (i / 4) * cH;
+                ctx.beginPath(); ctx.moveTo(pad.l, y); ctx.lineTo(pad.l + cW, y); ctx.stroke();
+                const val = (maxV - (maxV - minV) * i / 4).toFixed(metricKey === 'weight_kg' ? 1 : 0);
+                ctx.fillStyle = '#aaa'; ctx.font = '9px sans-serif'; ctx.textAlign = 'right';
+                ctx.fillText(val, pad.l - 3, y + 3);
+            }
+
+            // WHO median
+            ctx.strokeStyle = 'rgba(52,199,89,0.5)'; ctx.lineWidth = 1.5; ctx.setLineDash([4,3]);
+            ctx.beginPath();
+            who.forEach((v, i) => { i === 0 ? ctx.moveTo(toX(i), toY(v)) : ctx.lineTo(toX(i), toY(v)); });
+            ctx.stroke(); ctx.setLineDash([]);
+
+            if (pts.length === 0) {
+                ctx.fillStyle = '#aaa'; ctx.font = '12px sans-serif'; ctx.textAlign = 'center';
+                ctx.fillText('暂无数据', W / 2, H / 2); return;
+            }
+
+            // data line
+            ctx.strokeStyle = color; ctx.lineWidth = 2;
+            ctx.beginPath();
+            pts.forEach((p, i) => { i === 0 ? ctx.moveTo(toX(p.m), toY(p.v)) : ctx.lineTo(toX(p.m), toY(p.v)); });
+            ctx.stroke();
+
+            // dots + labels
+            pts.forEach(p => {
+                const x = toX(p.m), y = toY(p.v);
+                ctx.fillStyle = color; ctx.beginPath(); ctx.arc(x, y, 4, 0, Math.PI*2); ctx.fill();
+                ctx.fillStyle = '#333'; ctx.font = 'bold 10px sans-serif'; ctx.textAlign = 'center';
+                ctx.fillText(p.v.toFixed(metricKey === 'weight_kg' ? 1 : 1), x, y - 7);
+                const dp = p.date.split('-'); ctx.fillStyle = '#999'; ctx.font = '9px sans-serif';
+                ctx.fillText(`${parseInt(dp[1])}/​${parseInt(dp[2])}`, x, pad.t + cH + 18);
+            });
+
+            // legend
+            ctx.setLineDash([4,3]); ctx.strokeStyle = 'rgba(52,199,89,0.6)'; ctx.lineWidth = 1.5;
+            ctx.beginPath(); ctx.moveTo(W-80, 10); ctx.lineTo(W-60, 10); ctx.stroke(); ctx.setLineDash([]);
+            ctx.fillStyle = '#666'; ctx.font = '9px sans-serif'; ctx.textAlign = 'left';
+            ctx.fillText('WHO中位', W-58, 13);
+        }
+
         function renderGrowthChart() {
+            renderSingleGrowthChart('weight-chart', 'weight_kg', '#FF9500', 'kg');
+            renderSingleGrowthChart('height-chart', 'height_cm', '#007AFF', 'cm');
+            renderSingleGrowthChart('head-chart',   'head_cm',   '#AF52DE', 'cm');
+        }
+
+        function _OLD_renderGrowthChart_unused() {
             const canvas = document.getElementById('growth-chart');
             if (!canvas) return;
             
@@ -2473,39 +2752,7 @@
             }
         }
         
-        function renderWhoChart() {
-            const canvas = document.getElementById('who-chart');
-            if (!canvas || !currentData.who) return;
-            
-            const ctx = canvas.getContext('2d');
-            const width = canvas.width;
-            const height = canvas.height;
-            
-            ctx.clearRect(0, 0, width, height);
-            
-            // 绘制WHO标准对比曲线
-            ctx.strokeStyle = '#FF9500';
-            ctx.lineWidth = 2;
-            ctx.beginPath();
-            
-            // WHO标准线 (示例)
-            const whoPoints = [
-                { month: 0, height: 50 },
-                { month: 3, height: 61 },
-                { month: 6, height: 67 },
-                { month: 9, height: 72 },
-                { month: 12, height: 76 },
-            ];
-            
-            whoPoints.forEach((p, i) => {
-                const x = 40 + (p.month / 12) * (width - 80);
-                const y = height - 40 - (p.height / 80) * (height - 80);
-                if (i === 0) ctx.moveTo(x, y);
-                else ctx.lineTo(x, y);
-            });
-            
-            ctx.stroke();
-        }
+        function renderWhoChart() { /* replaced by renderGrowthChart with embedded WHO */ }
         
         // ========== 数据操作 ==========
         async function fetchData() {
@@ -2531,7 +2778,6 @@
                 if (activePage === 'page-growth') {
                     renderMilkChart();
                     renderGrowthChart();
-                    renderWhoChart();
                 }
             } catch (err) {
                 console.error('获取数据错误:', err);
@@ -2539,14 +2785,33 @@
             }
         }
         
+        function getDriveFileId(url) {
+            if (!url) return '';
+            const m1 = url.match(/[?&]id=([^&]+)/);
+            if (m1) return m1[1];
+            const m2 = url.match(/\/d\/([^/]+)/);
+            if (m2) return m2[1];
+            return '';
+        }
+
+        function getDriveThumbnailUrl(url) {
+            const id = getDriveFileId(url);
+            if (id) return `https://drive.google.com/thumbnail?id=${id}&sz=w400`;
+            return url;
+        }
+
+        let viewerPhotoRecord = null;
+
         function renderTodayPhotos() {
             const container = document.getElementById('today-photo-grid');
             if (!container) return;
             
             const dateStr = viewDateStr || getTodayStr();
-            const todayPhotos = currentData.photo?.filter(p => p.timestamp?.startsWith(dateStr)) || [];
+            const allPhotos = currentData.photo || [];
+            const dayPhotos = allPhotos.map((p, idx) => ({ ...p, _originalIdx: idx }))
+                                       .filter(p => p.timestamp?.startsWith(dateStr));
             
-            if (todayPhotos.length === 0) {
+            if (dayPhotos.length === 0) {
                 container.innerHTML = `
                     <div class="photo-item" style="display:flex;align-items:center;justify-content:center;color:var(--text-light);grid-column:1/-1;">
                         当日还没有照片
@@ -2556,14 +2821,49 @@
             }
             
             let html = '';
-            todayPhotos.forEach(photo => {
+            dayPhotos.forEach((photo, i) => {
+                const thumb = getDriveThumbnailUrl(photo.drive_url);
                 html += `
-                    <div class="photo-item" onclick="viewImage('${photo.drive_url}')">
-                        <img src="${photo.drive_url}" alt="${photo.caption || ''}" loading="lazy">
+                    <div class="photo-item" onclick="viewPhoto(${photo._originalIdx})" style="position:relative;overflow:hidden;border-radius:12px;">
+                        <img src="${thumb}" alt="${photo.caption || ''}" loading="lazy" style="width:100%;height:100%;object-fit:cover;" onerror="this.src='${photo.drive_url}'">
                     </div>
                 `;
             });
             container.innerHTML = html;
+        }
+
+        function viewPhoto(originalIdx) {
+            const photo = (currentData.photo || [])[originalIdx];
+            if (!photo) return;
+            viewerPhotoRecord = { ...photo, _originalIdx: originalIdx };
+            const viewer = document.getElementById('image-viewer');
+            const img = document.getElementById('viewer-img');
+            const delBtn = document.getElementById('viewer-delete-btn');
+            img.src = getDriveThumbnailUrl(photo.drive_url);
+            img.onerror = () => { img.src = photo.drive_url; };
+            if (delBtn) delBtn.style.display = 'block';
+            viewer.classList.add('active');
+        }
+
+        async function deleteViewedPhoto() {
+            if (!viewerPhotoRecord) return;
+            if (!confirm('确定要删除这张照片？')) return;
+            const idx = viewerPhotoRecord._originalIdx;
+            const row_idx = idx + 2;
+            const drive_file_id = getDriveFileId(viewerPhotoRecord.drive_url);
+            closeImageViewer();
+            try {
+                const res = await fetch('/api/delete', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ type: 'photo', row_idx, drive_file_id })
+                });
+                if (!res.ok) throw new Error('删除失败');
+                showToast('照片已删除');
+                await fetchData();
+            } catch (err) {
+                showToast('删除失败: ' + err.message);
+            }
         }
         
         // (Dead fetchStats, updateStatDisplay, renderRecords, renderRecordItem, renderPhotoGrid removed - not used by current UI)
@@ -2571,13 +2871,16 @@
         // (Old form listeners removed - forms are now handled via modal submit functions)
         
         function viewImage(url) {
+            viewerPhotoRecord = null;
             const viewer = document.getElementById('image-viewer');
-            document.getElementById('viewer-img').src = url;
-            viewer.classList.add('show');
+            document.getElementById('viewer-img').src = getDriveThumbnailUrl(url);
+            const delBtn = document.getElementById('viewer-delete-btn');
+            if (delBtn) delBtn.style.display = 'none';
+            viewer.classList.add('active');
         }
         
         function closeImageViewer() {
-            document.getElementById('image-viewer').classList.remove('show');
+            document.getElementById('image-viewer').classList.remove('active');
         }
         
         // ========== 记录编辑/删除 ==========
@@ -2655,9 +2958,10 @@
                 setField(`${type}-time`, timePart); setDisplay(`${type}-time-display`, timePart);
             }
 
-            if (type === 'milk') { setField('milk-amount', record.amount_ml || ''); }
-            else if (type === 'food') { setField('food-type', record.food_type || ''); setField('food-amount', record.amount || ''); }
-            else if (type === 'poop') { setField('poop-type', record.type || '正常'); setField('poop-color', record.color || '黄色'); }
+            if (type === 'milk') { setField('milk-amount', record.amount_ml || ''); setField('milk-note', record.note || ''); }
+            else if (type === 'food') { setField('food-type', record.food_type || ''); setField('food-amount', record.amount || ''); setField('food-note', record.note || ''); }
+            else if (type === 'poop') { setField('poop-type', record.type || '正常'); setField('poop-color', record.color || '黄色'); setField('poop-note', record.note || ''); }
+            else if (type === 'sleep') { setField('sleep-note', record.note || ''); }
         }
         
         // (Duplicate renderGrowthChart and dead settings/navigation code removed)
@@ -2667,21 +2971,9 @@
             const date = document.getElementById('milk-date').value;
             const time = document.getElementById('milk-time').value;
             const amount = document.getElementById('milk-amount').value;
-            
-            if (!amount) {
-                showToast('请输入奶量');
-                return;
-            }
-            
-            const data = {
-                type: 'milk',
-                timestamp: `${date} ${time}:00`,
-                amount_ml: amount,
-                milk_type: '奶粉',
-                note: ''
-            };
-            
-            await submitRecord(data, '喂奶');
+            const note = document.getElementById('milk-note')?.value || '';
+            if (!amount) { showToast('请输入奶量'); return; }
+            await submitRecord({ type: 'milk', timestamp: `${date} ${time}:00`, amount_ml: amount, milk_type: '奶粉', note }, '喂奶');
         }
         
         async function submitFood() {
@@ -2689,21 +2981,9 @@
             const time = document.getElementById('food-time').value;
             const type = document.getElementById('food-type').value;
             const amount = document.getElementById('food-amount').value;
-            
-            if (!type) {
-                showToast('请输入食物类型');
-                return;
-            }
-            
-            const data = {
-                type: 'food',
-                timestamp: `${date} ${time}:00`,
-                food_type: type,
-                amount: amount,
-                note: ''
-            };
-            
-            await submitRecord(data, '辅食');
+            const note = document.getElementById('food-note')?.value || '';
+            if (!type) { showToast('请输入食物类型'); return; }
+            await submitRecord({ type: 'food', timestamp: `${date} ${time}:00`, food_type: type, amount, note }, '辅食');
         }
         
         async function submitPoop() {
@@ -2711,38 +2991,22 @@
             const time = document.getElementById('poop-time').value;
             const poopType = document.getElementById('poop-type').value;
             const color = document.getElementById('poop-color').value;
-            
-            const data = {
-                type: 'poop',
-                timestamp: `${date} ${time}:00`,
-                poop_type: poopType,
-                color: color,
-                note: ''
-            };
-            
-            await submitRecord(data, '换尿布');
+            const note = document.getElementById('poop-note')?.value || '';
+            await submitRecord({ type: 'poop', timestamp: `${date} ${time}:00`, poop_type: poopType, color, note }, '换尿布');
         }
         
         async function submitSleep() {
             const date = document.getElementById('sleep-date').value;
             const startTime = document.getElementById('sleep-start').value;
             const endTime = document.getElementById('sleep-end').value;
-            
-            // 计算持续时间
-            const start = new Date(`${date} ${startTime}`);
-            const end = new Date(`${date} ${endTime}`);
+            const overnight = document.getElementById('sleep-overnight')?.checked;
+            const endDate = overnight ? (document.getElementById('sleep-end-date')?.value || date) : date;
+            const note = document.getElementById('sleep-note')?.value || '';
+            const start = new Date(`${date}T${startTime}`);
+            const end = new Date(`${endDate}T${endTime}`);
             let durationMin = Math.round((end - start) / 60000);
-            if (durationMin < 0) durationMin += 24 * 60;
-            
-            const data = {
-                type: 'sleep',
-                start_time: `${date} ${startTime}:00`,
-                end_time: `${date} ${endTime}:00`,
-                duration_min: durationMin,
-                note: ''
-            };
-            
-            await submitRecord(data, '睡眠');
+            if (durationMin < 0) durationMin = 0;
+            await submitRecord({ type: 'sleep', start_time: `${date} ${startTime}:00`, end_time: `${endDate} ${endTime}:00`, duration_min: durationMin, note }, '睡眠');
         }
         
         async function submitGrowth() {

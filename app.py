@@ -522,6 +522,17 @@ def delete_record():
             ws = sh.worksheet(record_type)
         
         ws.delete_rows(row_idx)
+
+        # 如果提供了 Drive 文件 ID，同时删除 Drive 上的文件
+        drive_file_id = data.get('drive_file_id', '')
+        if drive_file_id:
+            try:
+                svc = get_drive_upload_service()
+                svc.files().delete(fileId=drive_file_id).execute()
+                print(f'Drive 文件 {drive_file_id} 已删除')
+            except Exception as de:
+                print(f'删除 Drive 文件失败 (非致命): {de}')
+
         return jsonify({'success': True})
         
     except Exception as e:
