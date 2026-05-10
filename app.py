@@ -65,7 +65,7 @@ def get_service_account_creds():
             return Credentials.from_service_account_info(
                 info,
                 scopes=['https://www.googleapis.com/auth/spreadsheets',
-                        'https://www.googleapis.com/auth/drive.file']
+                        'https://www.googleapis.com/auth/drive']
             )
         except json.JSONDecodeError as e:
             print(f'Service Account JSON 解析错误: {e}')
@@ -81,7 +81,7 @@ def get_service_account_creds():
         return Credentials.from_service_account_file(
             'service_account.json',
             scopes=['https://www.googleapis.com/auth/spreadsheets',
-                    'https://www.googleapis.com/auth/drive.file']
+                    'https://www.googleapis.com/auth/drive']
         )
     
     print('无法获取 Service Account 凭证')
@@ -117,8 +117,12 @@ def get_sheets_client():
 
 
 def get_drive_service():
-    """获取 Drive 服务"""
-    creds = get_oauth_creds()
+    """获取 Drive 服务，优先 OAuth，失败时退回 Service Account"""
+    creds = None
+    try:
+        creds = get_oauth_creds()
+    except Exception as e:
+        print(f'OAuth 凭证失败，改用 Service Account 上传: {e}')
     if not creds:
         creds = get_service_account_creds()
     if creds:
