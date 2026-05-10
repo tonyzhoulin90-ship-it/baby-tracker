@@ -1466,6 +1466,19 @@
         </div>
     </div>
     
+    <!-- ========== 日期详情弹窗 ========== -->
+    <div class="date-picker-calendar" id="date-details-modal">
+        <div class="calendar-sheet" style="width: 90%; max-width: 400px; max-height: 80vh; overflow-y: auto;">
+            <div class="time-picker-header">
+                <div class="time-picker-title" id="date-details-title">记录详情</div>
+                <div class="time-picker-done" onclick="closeDateDetailsModal()">关闭</div>
+            </div>
+            <div id="date-details-content" style="padding: 0 5px;">
+                <!-- JS生成 -->
+            </div>
+        </div>
+    </div>
+
     <!-- 图片查看器 -->
     <div class="image-viewer" id="image-viewer" onclick="closeImageViewer()">
         <span class="image-viewer-close">&times;</span>
@@ -1592,36 +1605,39 @@
             if (poopEl) poopEl.textContent = poopCount;
         }
         
+        // 全局今日时间轴记录，保留原始索引用于删除/编辑
+        let todayTimelineRecords = [];
+
         function renderTodayTimeline() {
             const container = document.getElementById('today-timeline');
             if (!container) return;
             
             const todayStr = getTodayStr();
             const typeConfig = {
-                milk: { icon: '🍼', color: 'milk', name: '喂奶' },
-                food: { icon: '🍚', color: 'food', name: '辅食' },
-                poop: { icon: '💩', color: 'poop', name: '换尿布' },
-                sleep: { icon: '😴', color: 'sleep', name: '睡眠' },
+                milk:      { icon: '🍼', color: 'milk',      name: '喂奶' },
+                food:      { icon: '🍚', color: 'food',      name: '辅食' },
+                poop:      { icon: '💩', color: 'poop',      name: '换尿布' },
+                sleep:     { icon: '😴', color: 'sleep',     name: '睡眠' },
                 milestone: { icon: '🎯', color: 'milestone', name: '里程碑' }
             };
             
-            // 收集今日记录
-            const todayRecords = [];
-            Object.keys(currentData).forEach(type => {
-                if (typeConfig[type] && Array.isArray(currentData[type])) {
-                    currentData[type].forEach(record => {
+            // 收集今日记录，保存 recordType 和原始索引（避免 type 字段冲突）
+            todayTimelineRecords = [];
+            Object.keys(typeConfig).forEach(recordType => {
+                if (Array.isArray(currentData[recordType])) {
+                    currentData[recordType].forEach((record, originalIdx) => {
                         const time = record.timestamp || record.date || record.start_time;
                         if (time?.startsWith(todayStr)) {
-                            todayRecords.push({ type, ...record });
+                            todayTimelineRecords.push({ recordType, record, originalIdx });
                         }
                     });
                 }
             });
             
-            // 按时间排序
-            todayRecords.sort((a, b) => {
-                const timeA = a.timestamp || a.date || a.start_time || '';
-                const timeB = b.timestamp || b.date || b.start_time || '';
+            // 按时间倒序排列
+            todayTimelineRecords.sort((a, b) => {
+                const timeA = a.record.timestamp || a.record.date || a.record.start_time || '';
+                const timeB = b.record.timestamp || b.record.date || b.record.start_time || '';
                 return timeB.localeCompare(timeA);
             });
             
@@ -1643,35 +1659,36 @@
                 </div>
             `;
 
-            if (todayRecords.length === 0) {
+            if (todayTimelineRecords.length === 0) {
                 html += `<div style="text-align:center;padding:20px;color:#999;">今天还没有记录</div>`;
                 container.innerHTML = html;
                 return;
             }
 
-            todayRecords.forEach((record, index) => {
-                const config = typeConfig[record.type];
-                const time = record.timestamp?.split(' ')[1]?.substring(0, 5) ||
-                           record.start_time?.split(' ')[1]?.substring(0, 5) || '';
+            todayTimelineRecords.forEach((item, i) => {
+                const { recordType, record } = item;
+                const config = typeConfig[recordType];
+                const time = (record.timestamp || record.start_time || '').split(' ')[1]?.substring(0, 5) || '';
 
                 let desc = '';
                 let meta = '';
-                if (record.type === 'milk') {
+                if (recordType === 'milk') {
                     desc = `${record.amount_ml}ml`;
-                    meta = `奶粉 | ${time}`;
-                }
-                else if (record.type === 'sleep') {
-                    desc = `睡了 ${record.duration_min} 分钟`;
-                    const endTime = record.end_time?.split(' ')[1]?.substring(0, 5) || '';
-                    meta = `${time} - ${endTime}`;
-                }
-                else if (record.type === 'poop') {
-                    desc = record.poop_type || '排便';
+                    meta = time;
+                } else if (recordType === 'sleep') {
+                    desc = `${record.duration_min}分钟`;
+                    const endTime = (record.end_time || '').split(' ')[1]?.substring(0, 5) || '';
+                    meta = `${time} – ${endTime}`;
+                } else if (recordType === 'poop') {
+                    // record.type 是排便性状字段，不是数据类型
+                    desc = record.type || '排便';
                     meta = `${record.color || ''} | ${time}`;
-                }
-                else if (record.type === 'food') {
+                } else if (recordType === 'food') {
                     desc = record.food_type || '辅食';
                     meta = `${record.amount || ''} | ${time}`;
+                } else if (recordType === 'milestone') {
+                    desc = record.category || '';
+                    meta = record.description || '';
                 }
 
                 html += `
@@ -1681,7 +1698,10 @@
                             <div class="timeline-title">${config.name} ${desc}</div>
                             <div class="timeline-meta">${meta}</div>
                         </div>
-                        <div class="timeline-delete" onclick="deleteRecord('${record.type}', ${index}, event)">删除</div>
+                        <div style="display:flex;gap:4px;flex-shrink:0;">
+                            <div class="timeline-delete" style="color:#007AFF;" onclick="editTimelineRecord(${i}, event)">编辑</div>
+                            <div class="timeline-delete" onclick="deleteTimelineRecord(${i}, event)">删除</div>
+                        </div>
                     </div>
                 `;
             });
@@ -1701,20 +1721,20 @@
             const hourWheel = document.getElementById('hour-wheel');
             const minuteWheel = document.getElementById('minute-wheel');
             
-            // 生成小时选项 (00-23)
-            let hourHtml = '<div class="time-wheel-item"></div>';
+            // 生成小时选项 (00-23)，两端各2个空白确保首尾值也能被选中
+            let hourHtml = '<div class="time-wheel-item"></div><div class="time-wheel-item"></div>';
             for (let i = 0; i < 24; i++) {
                 hourHtml += `<div class="time-wheel-item" data-value="${String(i).padStart(2,'0')}">${String(i).padStart(2,'0')}</div>`;
             }
-            hourHtml += '<div class="time-wheel-item"></div>';
+            hourHtml += '<div class="time-wheel-item"></div><div class="time-wheel-item"></div>';
             hourWheel.innerHTML = hourHtml;
             
-            // 生成分钟选项 (00-59)
-            let minuteHtml = '<div class="time-wheel-item"></div>';
+            // 生成分钟选项 (00-59)，两端各2个空白确保首尾值也能被选中
+            let minuteHtml = '<div class="time-wheel-item"></div><div class="time-wheel-item"></div>';
             for (let i = 0; i < 60; i++) {
                 minuteHtml += `<div class="time-wheel-item" data-value="${String(i).padStart(2,'0')}">${String(i).padStart(2,'0')}</div>`;
             }
-            minuteHtml += '<div class="time-wheel-item"></div>';
+            minuteHtml += '<div class="time-wheel-item"></div><div class="time-wheel-item"></div>';
             minuteWheel.innerHTML = minuteHtml;
         }
         
@@ -1730,8 +1750,9 @@
             const hourWheel = document.getElementById('hour-wheel');
             const minuteWheel = document.getElementById('minute-wheel');
             
-            hourWheel.scrollTop = (hour + 1) * 40 - 100;
-            minuteWheel.scrollTop = (minute + 1) * 40 - 100;
+            // 2个padding项 + 数据项，使选中项居中：scrollTop = (2 + index) * 40 - 80
+            hourWheel.scrollTop = (hour + 2) * 40 - 80;
+            minuteWheel.scrollTop = (minute + 2) * 40 - 80;
         }
         
         function closeTimePicker() {
@@ -1745,8 +1766,9 @@
             const hours = document.querySelectorAll('#hour-wheel .time-wheel-item');
             const minutes = document.querySelectorAll('#minute-wheel .time-wheel-item');
             
-            const hour = hours[hourIdx + 1]?.dataset.value || '00';
-            const minute = minutes[minuteIdx + 1]?.dataset.value || '00';
+            // 每端有2个padding，所以数据项从索引2开始
+            const hour = hours[hourIdx + 2]?.dataset.value || '00';
+            const minute = minutes[minuteIdx + 2]?.dataset.value || '00';
             
             document.getElementById('time-picker').classList.remove('active');
             
@@ -2120,12 +2142,15 @@
             }
             
             // 当月日期
+            const todayD = new Date();
             for (let i = 1; i <= daysInMonth; i++) {
                 const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(i).padStart(2,'0')}`;
                 const hasPhoto = currentData.photo?.some(p => p.timestamp?.startsWith(dateStr));
-                
-                html += `<div class="calendar-day ${hasPhoto ? 'has-photo' : ''}" 
-                              onclick="showDateDetails('${dateStr}')">${i}</div>`;
+                const isToday = i === todayD.getDate() && month === todayD.getMonth() && year === todayD.getFullYear();
+                let cls = 'calendar-day';
+                if (isToday) cls += ' today';
+                if (hasPhoto) cls += ' has-photo';
+                html += `<div class="${cls}" onclick="showDateDetails('${dateStr}')">${i}</div>`;
             }
             
             // 下月日期
@@ -2157,9 +2182,63 @@
             container.innerHTML = html || '<div style="text-align: center; color: var(--text-light); padding: 20px;">暂无里程碑记录</div>';
         }
         
-        function showDateDetails(date) {
-            // 显示选中日期的详情
-            showToast(`${date} 的记录详情功能开发中`);
+        function showDateDetails(dateStr) {
+            const typeConfig = {
+                milk:      { icon: '🍼', name: '喂奶',   timeKey: 'timestamp' },
+                food:      { icon: '🍚', name: '辅食',   timeKey: 'timestamp' },
+                poop:      { icon: '💩', name: '换尿布', timeKey: 'timestamp' },
+                sleep:     { icon: '😴', name: '睡眠',   timeKey: 'start_time' },
+                milestone: { icon: '🎯', name: '里程碑', timeKey: 'date' },
+                photo:     { icon: '📸', name: '照片',   timeKey: 'timestamp' }
+            };
+
+            document.getElementById('date-details-title').textContent = `${dateStr} 的记录`;
+
+            let html = '';
+            let hasRecords = false;
+
+            Object.keys(typeConfig).forEach(recordType => {
+                const cfg = typeConfig[recordType];
+                const dayRecords = (currentData[recordType] || []).filter(r =>
+                    (r[cfg.timeKey] || '').startsWith(dateStr)
+                );
+
+                dayRecords.forEach(r => {
+                    hasRecords = true;
+                    const time = (r.timestamp || r.start_time || '').split(' ')[1]?.substring(0, 5) || '';
+                    let desc = '';
+                    if (recordType === 'milk')      desc = `${r.amount_ml}ml  ${time}`;
+                    else if (recordType === 'food') desc = `${r.food_type || ''} ${r.amount || ''}  ${time}`;
+                    else if (recordType === 'poop') desc = `${r.type || '排便'} ${r.color || ''}  ${time}`;
+                    else if (recordType === 'sleep') {
+                        const end = (r.end_time || '').split(' ')[1]?.substring(0,5) || '';
+                        desc = `${r.duration_min}分钟 (${time}–${end})`;
+                    }
+                    else if (recordType === 'milestone') desc = `${r.category}: ${r.description}`;
+                    else if (recordType === 'photo')     desc = r.caption || '照片';
+
+                    html += `
+                        <div class="timeline-item">
+                            <div class="timeline-icon ${recordType}">${cfg.icon}</div>
+                            <div class="timeline-content">
+                                <div class="timeline-title">${cfg.name}</div>
+                                <div class="timeline-meta">${desc}</div>
+                            </div>
+                        </div>
+                    `;
+                });
+            });
+
+            if (!hasRecords) {
+                html = '<div style="text-align:center;padding:20px;color:#999;">当日暂无记录</div>';
+            }
+
+            document.getElementById('date-details-content').innerHTML = html;
+            document.getElementById('date-details-modal').classList.add('active');
+        }
+
+        function closeDateDetailsModal() {
+            document.getElementById('date-details-modal').classList.remove('active');
         }
         
         // ========== 成长页面 ==========
@@ -2434,55 +2513,58 @@
         }
         
         // ========== 记录编辑/删除 ==========
-        async function editRecord(type, rowIdx) {
-            // 简化实现：提示用户重新填写并删除旧记录
-            const confirmEdit = confirm('编辑将删除旧记录并创建新记录，是否继续？');
-            if (!confirmEdit) return;
-            
-            // 删除旧记录
-            await deleteRecord(type, rowIdx, false);
-            
-            // 切换到输入页面
-            switchPage('input');
-            
-            showToast('请重新填写记录');
-        }
-        
-        async function deleteRecord(type, rowIdx, event = null) {
+        async function deleteTimelineRecord(idx, event) {
             if (event) event.stopPropagation();
             if (!confirm('确定要删除这条记录吗？')) return;
 
+            const item = todayTimelineRecords[idx];
+            if (!item) { showToast('记录不存在'); return; }
+
+            const { recordType, originalIdx } = item;
+            // Google Sheets: 第1行是表头，数据从第2行开始
+            const row_idx = originalIdx + 2;
+
             try {
-                // 找到该记录在原始数组中的实际索引
-                const todayStr = getTodayStr();
-                const records = currentData[type] || [];
-                const todayRecords = records.filter(r => {
-                    const ts = r.timestamp || r.date || r.start_time || '';
-                    return ts.startsWith(todayStr);
-                });
-
-                const recordToDelete = todayRecords[rowIdx];
-                const originalIdx = records.indexOf(recordToDelete);
-
-                if (originalIdx === -1) {
-                    showToast('记录不存在');
-                    return;
-                }
-
                 const res = await fetch('/api/delete', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ type, row_idx: originalIdx + 2 }) // +2 for header row and 1-indexed
+                    body: JSON.stringify({ type: recordType, row_idx })
                 });
-
-                if (!res.ok) throw new Error('删除失败');
-
+                const json = await res.json();
+                if (!res.ok) throw new Error(json.error || '删除失败');
                 showToast('删除成功');
-                fetchData();
+                await fetchData();
             } catch (err) {
                 console.error('删除错误:', err);
-                showToast('删除失败');
+                showToast('删除失败: ' + err.message);
             }
+        }
+
+        async function editTimelineRecord(idx, event) {
+            if (event) event.stopPropagation();
+
+            const item = todayTimelineRecords[idx];
+            if (!item) return;
+
+            if (!confirm('编辑将删除旧记录并重新填写，是否继续？')) return;
+
+            const { recordType, originalIdx } = item;
+            const row_idx = originalIdx + 2;
+
+            try {
+                const res = await fetch('/api/delete', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ type: recordType, row_idx })
+                });
+                if (!res.ok) console.warn('删除旧记录失败');
+                await fetchData();
+            } catch (err) {
+                console.error('删除旧记录错误:', err);
+            }
+
+            switchPage('input');
+            showInputForm(recordType);
         }
         
         // (Duplicate renderGrowthChart and dead settings/navigation code removed)
@@ -2666,9 +2748,13 @@
                 body: formData
             });
 
-            if (!res.ok) throw new Error('上传失败');
+            if (!res.ok) {
+                const errData = await res.json().catch(() => ({}));
+                throw new Error(errData.error || `HTTP ${res.status}`);
+            }
 
             const result = await res.json();
+            if (!result.drive_url) throw new Error('未获取到文件链接');
             return result.drive_url;
         }
         
@@ -2680,7 +2766,10 @@
                     body: JSON.stringify(data)
                 });
 
-                if (!res.ok) throw new Error('保存失败');
+                if (!res.ok) {
+                    const errData = await res.json().catch(() => ({}));
+                    throw new Error(errData.error || `HTTP ${res.status}`);
+                }
 
                 showToast(`${typeName}记录已保存`);
                 closeInputModal();
@@ -2690,7 +2779,6 @@
                     await fetchData();
                 } catch (refreshErr) {
                     console.error('刷新数据错误:', refreshErr);
-                    // 刷新失败不影响保存成功的提示
                 }
 
                 // 切换回今日页面

@@ -65,7 +65,7 @@ def get_service_account_creds():
             return Credentials.from_service_account_info(
                 info,
                 scopes=['https://www.googleapis.com/auth/spreadsheets',
-                        'https://www.googleapis.com/auth/drive.readonly']
+                        'https://www.googleapis.com/auth/drive.file']
             )
         except json.JSONDecodeError as e:
             print(f'Service Account JSON 解析错误: {e}')
@@ -81,7 +81,7 @@ def get_service_account_creds():
         return Credentials.from_service_account_file(
             'service_account.json',
             scopes=['https://www.googleapis.com/auth/spreadsheets',
-                    'https://www.googleapis.com/auth/drive.readonly']
+                    'https://www.googleapis.com/auth/drive.file']
         )
     
     print('无法获取 Service Account 凭证')
@@ -112,7 +112,7 @@ def get_sheets_client():
     """获取 Sheets 客户端"""
     creds = get_service_account_creds()
     if creds:
-        return gspread.authorize(creds)
+        return gspread.Client(auth=creds)
     return None
 
 
@@ -166,9 +166,14 @@ def init_spreadsheet():
         
         # 确保 Sheet1 是成长记录表
         try:
-            ws = sh.worksheet('Sheet1')
-            first_row = ws.row_values(1)
-            if not first_row:
+            try:
+                ws = sh.worksheet('Sheet1')
+                first_row = ws.row_values(1)
+                if not first_row:
+                    ws.append_row(SHEET_HEADERS['growth'])
+            except gspread.WorksheetNotFound:
+                print('Sheet1 不存在，正在创建...')
+                ws = sh.add_worksheet(title='Sheet1', rows=1000, cols=10)
                 ws.append_row(SHEET_HEADERS['growth'])
         except Exception as e:
             print(f'Sheet1 检查错误: {e}')
