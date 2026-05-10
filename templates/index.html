@@ -45,7 +45,41 @@
             color: var(--text);
             line-height: 1.6;
             padding-bottom: 80px;
+            overscroll-behavior-y: contain; /* 禁止浏览器原生下拉刷新 */
         }
+
+        /* 自定义下拉刷新指示器 */
+        #pull-refresh-indicator {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 0;
+            overflow: hidden;
+            background: var(--bg);
+            z-index: 999;
+            transition: height 0.15s ease;
+            font-size: 0.85rem;
+            color: var(--text-light);
+            gap: 8px;
+        }
+        #pull-refresh-indicator.releasing {
+            color: var(--primary);
+        }
+        #pull-refresh-indicator.refreshing {
+            height: 52px !important;
+        }
+        .pull-spinner {
+            width: 18px; height: 18px;
+            border: 2px solid var(--border);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
         
         /* 头部 */
         .header {
@@ -553,33 +587,55 @@
         .image-viewer {
             display: none;
             position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
+            top: 0; left: 0; right: 0; bottom: 0;
             background: rgba(0,0,0,0.95);
             z-index: 300;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
+            gap: 0;
         }
-        
-        .image-viewer.show, .image-viewer.active {
+        .image-viewer.show, .image-viewer.active { display: flex; }
+
+        .viewer-topbar {
+            width: 100%;
             display: flex;
+            justify-content: flex-end;
+            padding: 16px 20px 8px;
+            flex-shrink: 0;
         }
-        
-        .image-viewer img {
-            max-width: 95%;
-            max-height: 95%;
-            object-fit: contain;
-        }
-        
         .image-viewer-close {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            color: white;
+            color: rgba(255,255,255,0.85);
             font-size: 2rem;
             cursor: pointer;
+            line-height: 1;
+            padding: 4px;
+        }
+        .viewer-img-wrap {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            overflow: hidden;
+        }
+        .image-viewer img {
+            max-width: 95%;
+            max-height: 100%;
+            object-fit: contain;
+            border-radius: 8px;
+        }
+        .viewer-caption {
+            display: none;
+            color: rgba(255,255,255,0.85);
+            font-size: 0.9rem;
+            text-align: center;
+            padding: 8px 24px;
+            flex-shrink: 0;
+        }
+        .viewer-actions {
+            padding: 16px 0 32px;
+            flex-shrink: 0;
         }
         
         /* 设置面板 */
@@ -1313,6 +1369,13 @@
     </style>
 </head>
 <body data-age-months="{{ age_months }}" data-age-days="{{ age_days }}" data-birth-date="{{ birth_date }}">
+
+    <!-- 自定义下拉刷新指示器 -->
+    <div id="pull-refresh-indicator">
+        <div class="pull-spinner" id="pull-spinner" style="display:none;"></div>
+        <span id="pull-refresh-text">下拉刷新</span>
+    </div>
+
     <!-- ========== 今日页面 ========== -->
     <div class="page active" id="page-today">
         <!-- 今日头部 -->
@@ -1616,11 +1679,20 @@
     </div>
 
     <!-- 图片查看器 -->
-    <div class="image-viewer" id="image-viewer">
-        <span class="image-viewer-close" onclick="closeImageViewer()">&times;</span>
-        <img id="viewer-img" src="" alt="" onclick="event.stopPropagation()">
-        <div id="viewer-actions" style="position:absolute;bottom:30px;left:0;right:0;display:flex;justify-content:center;gap:20px;">
-            <button id="viewer-delete-btn" style="display:none;background:rgba(255,59,48,0.85);color:#fff;border:none;border-radius:22px;padding:10px 28px;font-size:1rem;font-weight:600;" onclick="deleteViewedPhoto()">删除照片</button>
+    <div class="image-viewer" id="image-viewer" onclick="closeImageViewer()">
+        <!-- 顶部关闭栏 -->
+        <div class="viewer-topbar" onclick="event.stopPropagation()">
+            <span class="image-viewer-close" onclick="closeImageViewer()">&times;</span>
+        </div>
+        <!-- 图片 -->
+        <div class="viewer-img-wrap" onclick="event.stopPropagation()">
+            <img id="viewer-img" src="" alt="">
+        </div>
+        <!-- 备注说明 -->
+        <div class="viewer-caption" id="viewer-caption" onclick="event.stopPropagation()"></div>
+        <!-- 底部操作 -->
+        <div class="viewer-actions" onclick="event.stopPropagation()">
+            <button id="viewer-delete-btn" style="display:none;background:rgba(255,59,48,0.9);color:#fff;border:none;border-radius:22px;padding:12px 36px;font-size:1rem;font-weight:600;letter-spacing:0.5px;" onclick="deleteViewedPhoto()">🗑 删除照片</button>
         </div>
     </div>
     
@@ -2836,13 +2908,27 @@
             const photo = (currentData.photo || [])[originalIdx];
             if (!photo) return;
             viewerPhotoRecord = { ...photo, _originalIdx: originalIdx };
-            const viewer = document.getElementById('image-viewer');
+
             const img = document.getElementById('viewer-img');
             const delBtn = document.getElementById('viewer-delete-btn');
+            const captionEl = document.getElementById('viewer-caption');
+
             img.src = getDriveThumbnailUrl(photo.drive_url);
             img.onerror = () => { img.src = photo.drive_url; };
-            if (delBtn) delBtn.style.display = 'block';
-            viewer.classList.add('active');
+
+            // 显示备注
+            if (captionEl) {
+                const cap = photo.caption || '';
+                captionEl.textContent = cap;
+                captionEl.style.display = cap ? 'block' : 'none';
+            }
+
+            // 显示删除按钮
+            if (delBtn) {
+                delBtn.style.display = 'inline-block';
+            }
+
+            document.getElementById('image-viewer').classList.add('active');
         }
 
         async function deleteViewedPhoto() {
@@ -2880,7 +2966,12 @@
         }
         
         function closeImageViewer() {
-            document.getElementById('image-viewer').classList.remove('active');
+            document.getElementById('image-viewer').classList.remove('active', 'show');
+            const delBtn = document.getElementById('viewer-delete-btn');
+            if (delBtn) delBtn.style.display = 'none';
+            const captionEl = document.getElementById('viewer-caption');
+            if (captionEl) { captionEl.textContent = ''; captionEl.style.display = 'none'; }
+            viewerPhotoRecord = null;
         }
         
         // ========== 记录编辑/删除 ==========
@@ -3174,6 +3265,68 @@
             renderGrowthChart();
             renderMilkChart();
         });
+
+        // ========== 自定义下拉刷新 ==========
+        (function() {
+            const THRESHOLD = 70;  // 触发刷新所需的下拉距离 (px)
+            const indicator = document.getElementById('pull-refresh-indicator');
+            const spinner   = document.getElementById('pull-spinner');
+            const text      = document.getElementById('pull-refresh-text');
+            let startY = 0, pulling = false, refreshing = false;
+
+            document.addEventListener('touchstart', e => {
+                // 仅当页面滚动到顶部时才启用下拉
+                if (window.scrollY === 0 && e.touches.length === 1) {
+                    startY = e.touches[0].clientY;
+                    pulling = true;
+                }
+            }, { passive: true });
+
+            document.addEventListener('touchmove', e => {
+                if (!pulling || refreshing) return;
+                const dist = e.touches[0].clientY - startY;
+                if (dist <= 0) { pulling = false; return; }
+                // 阻止滚动穿透
+                const h = Math.min(dist * 0.45, THRESHOLD);
+                indicator.style.height = h + 'px';
+                if (dist > THRESHOLD) {
+                    indicator.classList.add('releasing');
+                    text.textContent = '松开刷新';
+                } else {
+                    indicator.classList.remove('releasing');
+                    text.textContent = '下拉刷新';
+                }
+            }, { passive: true });
+
+            document.addEventListener('touchend', async e => {
+                if (!pulling || refreshing) return;
+                pulling = false;
+                const dist = e.changedTouches[0].clientY - startY;
+                if (dist > THRESHOLD) {
+                    // 触发刷新
+                    refreshing = true;
+                    indicator.style.transition = 'height 0.2s ease';
+                    indicator.style.height = '52px';
+                    indicator.classList.add('refreshing');
+                    spinner.style.display = 'block';
+                    text.textContent = '刷新中…';
+                    try {
+                        await fetchData();
+                    } finally {
+                        refreshing = false;
+                        spinner.style.display = 'none';
+                        text.textContent = '下拉刷新';
+                        indicator.classList.remove('refreshing', 'releasing');
+                        indicator.style.height = '0';
+                        setTimeout(() => { indicator.style.transition = ''; }, 200);
+                    }
+                } else {
+                    indicator.style.height = '0';
+                    indicator.classList.remove('releasing');
+                    text.textContent = '下拉刷新';
+                }
+            }, { passive: true });
+        })();
     </script>
 </body>
 </html>
