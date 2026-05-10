@@ -117,17 +117,22 @@ def get_sheets_client():
 
 
 def get_drive_service():
-    """获取 Drive 服务，优先 OAuth，失败时退回 Service Account"""
-    creds = None
-    try:
-        creds = get_oauth_creds()
-    except Exception as e:
-        print(f'OAuth 凭证失败，改用 Service Account 上传: {e}')
-    if not creds:
-        creds = get_service_account_creds()
+    """获取 Drive 服务（仅用于 Sheets 元数据）"""
+    creds = get_service_account_creds()
     if creds:
         return build('drive', 'v3', credentials=creds)
     return None
+
+
+def get_drive_upload_service():
+    """获取 Drive 上传服务（只用 OAuth，Service Account 无存储配额无法上传）"""
+    try:
+        creds = get_oauth_creds()
+        if creds:
+            return build('drive', 'v3', credentials=creds)
+        raise Exception('未配置 OAuth 凭证（GOOGLE_OAUTH_CLIENT_ID / SECRET / REFRESH_TOKEN）')
+    except Exception as e:
+        raise Exception(f'Drive 上传需要有效的 OAuth token。请运行 get_refresh_token.py 重新生成: {e}')
 
 
 def ensure_worksheet(sh, name, headers):
@@ -537,9 +542,11 @@ def upload_photo():
     if file.filename == '':
         return jsonify({'error': '文件名不能为空'}), 400
     
-    service = get_drive_service()
-    if not service:
-        return jsonify({'error': '无法连接到 Google Drive'}), 500
+    try:
+        service = get_drive_upload_service()
+    except Exception as e:
+        print(f'上传照片错误: {e}')
+        return jsonify({'error': str(e)}), 500
     
     try:
         # 创建文件元数据
