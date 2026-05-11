@@ -589,7 +589,7 @@
             position: fixed;
             top: 0; left: 0; right: 0; bottom: 0;
             background: rgba(0,0,0,0.95);
-            z-index: 300;
+            z-index: 2000;
             flex-direction: column;
             align-items: center;
             justify-content: center;
@@ -630,7 +630,15 @@
             color: rgba(255,255,255,0.85);
             font-size: 0.9rem;
             text-align: center;
-            padding: 8px 24px;
+            padding: 4px 24px 2px;
+            flex-shrink: 0;
+        }
+        .viewer-timestamp {
+            display: none;
+            color: rgba(255,255,255,0.45);
+            font-size: 0.78rem;
+            text-align: center;
+            padding: 2px 24px 6px;
             flex-shrink: 0;
         }
         .viewer-actions {
@@ -1438,6 +1446,13 @@
                     </div>
                     <div class="input-arrow">›</div>
                 </div>
+                <div class="timeline-item" onclick="quickAdd('nightsleep')">
+                    <div class="timeline-icon sleep">🌙</div>
+                    <div class="timeline-content">
+                        <div class="timeline-title">夜睡 / 早起</div>
+                    </div>
+                    <div class="input-arrow">›</div>
+                </div>
                 <div class="timeline-item" onclick="quickAdd('poop')">
                     <div class="timeline-icon poop">💩</div>
                     <div class="timeline-content">
@@ -1492,6 +1507,14 @@
                 <div class="input-content">
                     <div class="input-title">睡眠</div>
                     <div class="input-subtitle">记录睡眠时间</div>
+                </div>
+                <div class="input-arrow">›</div>
+            </div>
+            <div class="input-item" onclick="showInputForm('nightsleep')">
+                <div class="input-icon sleep">🌙</div>
+                <div class="input-content">
+                    <div class="input-title">夜睡 / 早起</div>
+                    <div class="input-subtitle">记录夜间入睡和早起时间</div>
                 </div>
                 <div class="input-arrow">›</div>
             </div>
@@ -1688,6 +1711,8 @@
         <div class="viewer-img-wrap" onclick="event.stopPropagation()">
             <img id="viewer-img" src="" alt="">
         </div>
+        <!-- 时间戳 -->
+        <div class="viewer-timestamp" id="viewer-timestamp" onclick="event.stopPropagation()"></div>
         <!-- 备注说明 -->
         <div class="viewer-caption" id="viewer-caption" onclick="event.stopPropagation()"></div>
         <!-- 底部操作 -->
@@ -1840,12 +1865,14 @@
                 });
             }
             
-            // 计算今日睡眠
+            // 计算今日睡眠 (含夜晚睡眠跨日记录)
             let sleepTotal = 0;
             if (currentData.sleep) {
                 currentData.sleep.forEach(r => {
-                    if (r.start_time?.startsWith(todayStr)) {
-                        sleepTotal += parseInt(r.duration_min) || 0;
+                    if (r.note === '夜睡') return; // 入睡标记，不计入统计
+                    const dur = parseInt(r.duration_min) || 0;
+                    if (r.start_time?.startsWith(todayStr) || r.end_time?.startsWith(todayStr)) {
+                        sleepTotal += dur;
                     }
                 });
             }
@@ -1873,6 +1900,7 @@
         // 全局今日时间轴记录，保留原始索引用于删除/编辑
         let todayTimelineRecords = [];
         let pendingPrefill = null;
+        let pendingEdit = null; // { recordType, row_idx } 等待替换的旧记录
 
         function renderTodayTimeline() {
             const container = document.getElementById('today-timeline');
@@ -1893,7 +1921,11 @@
                 if (Array.isArray(currentData[recordType])) {
                     currentData[recordType].forEach((record, originalIdx) => {
                         const time = record.timestamp || record.date || record.start_time;
-                        if (time?.startsWith(viewDateStr || getTodayStr())) {
+                        // 夜晚睡眠跨日：按 end_time 归入起床当天
+                        const endTime = record.end_time || '';
+                        const matchDate = viewDateStr || getTodayStr();
+                        const show = time?.startsWith(matchDate) || (record.note === '夜晚睡眠' && endTime.startsWith(matchDate));
+                        if (show) {
                             todayTimelineRecords.push({ recordType, record, originalIdx });
                         }
                     });
@@ -1909,18 +1941,22 @@
             
             // 快速添加按钮（始终显示在顶部）
             let html = `
-                <div style="display:flex;gap:10px;margin-bottom:15px;padding-bottom:15px;border-bottom:1px solid var(--border);">
-                    <div style="flex:1;text-align:center;padding:10px;background:#FFF3E0;border-radius:8px;cursor:pointer;" onclick="quickAdd('milk')">
-                        <div style="font-size:1.5rem;margin-bottom:5px;">🍼</div>
-                        <div style="font-size:0.9rem;color:#666;">喂奶</div>
+                <div style="display:flex;gap:8px;margin-bottom:15px;padding-bottom:15px;border-bottom:1px solid var(--border);flex-wrap:wrap;">
+                    <div style="flex:1;min-width:60px;text-align:center;padding:10px 6px;background:#FFF3E0;border-radius:8px;cursor:pointer;" onclick="quickAdd('milk')">
+                        <div style="font-size:1.4rem;margin-bottom:4px;">🍼</div>
+                        <div style="font-size:0.78rem;color:#666;">嗂奶</div>
                     </div>
-                    <div style="flex:1;text-align:center;padding:10px;background:#E3F2FD;border-radius:8px;cursor:pointer;" onclick="quickAdd('sleep')">
-                        <div style="font-size:1.5rem;margin-bottom:5px;">😴</div>
-                        <div style="font-size:0.9rem;color:#666;">睡眠</div>
+                    <div style="flex:1;min-width:60px;text-align:center;padding:10px 6px;background:#E3F2FD;border-radius:8px;cursor:pointer;" onclick="quickAdd('sleep')">
+                        <div style="font-size:1.4rem;margin-bottom:4px;">😴</div>
+                        <div style="font-size:0.78rem;color:#666;">睡眠</div>
                     </div>
-                    <div style="flex:1;text-align:center;padding:10px;background:#EFEBE9;border-radius:8px;cursor:pointer;" onclick="quickAdd('poop')">
-                        <div style="font-size:1.5rem;margin-bottom:5px;">💩</div>
-                        <div style="font-size:0.9rem;color:#666;">换尿布</div>
+                    <div style="flex:1;min-width:60px;text-align:center;padding:10px 6px;background:#E8F5E9;border-radius:8px;cursor:pointer;" onclick="quickAdd('nightsleep')">
+                        <div style="font-size:1.4rem;margin-bottom:4px;">🌙</div>
+                        <div style="font-size:0.78rem;color:#666;">夜睡</div>
+                    </div>
+                    <div style="flex:1;min-width:60px;text-align:center;padding:10px 6px;background:#EFEBE9;border-radius:8px;cursor:pointer;" onclick="quickAdd('poop')">
+                        <div style="font-size:1.4rem;margin-bottom:4px;">💩</div>
+                        <div style="font-size:0.78rem;color:#666;">尿布</div>
                     </div>
                 </div>
             `;
@@ -1934,6 +1970,7 @@
             todayTimelineRecords.forEach((item, i) => {
                 const { recordType, record } = item;
                 const config = typeConfig[recordType];
+                let icon = config.icon, itemName = config.name;
                 const time = (record.timestamp || record.start_time || '').split(' ')[1]?.substring(0, 5) || '';
 
                 let desc = '';
@@ -1942,9 +1979,20 @@
                     desc = `${record.amount_ml}ml`;
                     meta = time;
                 } else if (recordType === 'sleep') {
-                    desc = `${record.duration_min}分钟`;
-                    const endTime = (record.end_time || '').split(' ')[1]?.substring(0, 5) || '';
-                    meta = `${time} – ${endTime}`;
+                    if (record.note === '夜睡') {
+                        icon = '🌙'; itemName = '夜间入睡';
+                        desc = ''; meta = time;
+                    } else if (record.note === '夜晚睡眠') {
+                        icon = '🌙'; itemName = '夜晚睡眠';
+                        const h = Math.floor(record.duration_min/60), m = record.duration_min%60;
+                        desc = `${h}小时${m>0?m+'分':''}（跨夜）`;
+                        const endTime = (record.end_time||'').split(' ')[1]?.substring(0,5)||'';
+                        meta = `入睡${time} 起床${endTime}`;
+                    } else {
+                        desc = `${record.duration_min}分钟`;
+                        const endTime = (record.end_time || '').split(' ')[1]?.substring(0, 5) || '';
+                        meta = `${time} – ${endTime}`;
+                    }
                 } else if (recordType === 'poop') {
                     // record.type 是排便性状字段，不是数据类型
                     desc = record.type || '排便';
@@ -1957,12 +2005,13 @@
                     meta = record.description || '';
                 }
 
-                const noteHtml = record.note ? `<div style="font-size:0.78rem;color:#888;margin-top:2px;">💬 ${record.note}</div>` : '';
+                const internalNotes = ['夜睡', '夜晚睡眠'];
+                const noteHtml = (record.note && !internalNotes.includes(record.note)) ? `<div style="font-size:0.78rem;color:#888;margin-top:2px;">💬 ${record.note}</div>` : '';
                 html += `
                     <div class="timeline-item">
-                        <div class="timeline-icon ${config.color}">${config.icon}</div>
+                        <div class="timeline-icon ${config.color}">${icon}</div>
                         <div class="timeline-content">
-                            <div class="timeline-title">${config.name} ${desc}</div>
+                            <div class="timeline-title">${itemName} ${desc}</div>
                             <div class="timeline-meta">${meta}</div>
                             ${noteHtml}
                         </div>
@@ -1978,7 +2027,6 @@
         }
         
         function quickAdd(type) {
-            switchPage('input');
             showInputForm(type);
         }
         
@@ -2142,7 +2190,7 @@
                 growth: '成长数据'
             };
             
-            title.textContent = `记录${titles[type] || '记录'}`;
+            title.textContent = pendingEdit ? `修改${titles[type] || '记录'}` : `记录${titles[type] || '记录'}`;
             
             // 获取当前日期和时间
             const today = getTodayStr();
@@ -2273,23 +2321,41 @@
                             </div>
                         </div>
                     </div>
-                    <div class="form-group" style="display:flex;align-items:center;gap:10px;">
-                        <label class="form-label" style="margin:0;">跨日睡眠</label>
-                        <input type="checkbox" id="sleep-overnight" onchange="toggleSleepEndDate()" style="width:20px;height:20px;accent-color:var(--primary);">
-                        <span style="font-size:0.85rem;color:#999;">结束日期在次日</span>
-                    </div>
-                    <div class="form-group" id="sleep-end-date-group" style="display:none;">
-                        <label class="form-label">结束日期</label>
-                        <div class="date-picker-btn" onclick="selectDateForInput('sleep-end-date')">
-                            <span id="sleep-end-date-display">${today}</span>
-                            <input type="hidden" id="sleep-end-date" value="${today}">
-                        </div>
-                    </div>
                     <div class="form-group">
                         <label class="form-label">备注 <span style="color:#999;font-weight:400;">(可选)</span></label>
                         <input type="text" class="form-input" id="sleep-note" placeholder="添加备注...">
                     </div>
                     <button class="btn btn-primary btn-full" onclick="submitSleep()">保存</button>
+                `;
+            } else if (type === 'nightsleep') {
+                const tomorrow = (() => { const d = new Date(); d.setDate(d.getDate()+1); return d.toISOString().split('T')[0]; })();
+                formHtml = `
+                    <div style="display:flex;gap:10px;margin-bottom:16px;">
+                        <button id="ns-btn-bed" style="flex:1;padding:13px;border-radius:12px;border:2px solid var(--primary);background:var(--primary);color:#fff;font-size:1rem;font-weight:600;cursor:pointer;" onclick="selectNightSleepType('夜睡')">🌙 夜睡</button>
+                        <button id="ns-btn-wake" style="flex:1;padding:13px;border-radius:12px;border:2px solid var(--border);background:#f5f5f7;color:var(--text);font-size:1rem;font-weight:600;cursor:pointer;" onclick="selectNightSleepType('早起')">☀️ 早起</button>
+                    </div>
+                    <input type="hidden" id="nightsleep-type" value="夜睡">
+                    <div class="form-group">
+                        <label class="form-label">日期</label>
+                        <div class="date-picker-btn" onclick="selectDateForInput('nightsleep')">
+                            <span id="nightsleep-date-display">${today}</span>
+                            <input type="hidden" id="nightsleep-date" value="${today}">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">时间</label>
+                        <div class="date-picker-btn" onclick="selectTimeForInput('nightsleep')">
+                            <span id="nightsleep-time-display">${currentTime}</span>
+                            <input type="hidden" id="nightsleep-time" value="${currentTime}">
+                        </div>
+                    </div>
+                    <div id="ns-found-info" style="display:none;background:#E3F2FD;border-radius:10px;padding:12px;margin-bottom:10px;font-size:0.88rem;color:#1565C0;line-height:1.5;"></div>
+                    <div id="ns-error-info" style="display:none;background:#FFF3E0;border-radius:10px;padding:12px;margin-bottom:10px;font-size:0.88rem;color:#E65100;line-height:1.5;"></div>
+                    <div class="form-group">
+                        <label class="form-label">备注 <span style="color:#999;font-weight:400;">(可选)</span></label>
+                        <input type="text" class="form-input" id="nightsleep-note" placeholder="可选备注...">
+                    </div>
+                    <button class="btn btn-primary btn-full" id="ns-save-btn" onclick="submitNightSleep()">记录入睡时间</button>
                 `;
             } else if (type === 'milestone') {
                 formHtml = `
@@ -2372,7 +2438,14 @@
             if (pendingPrefill) {
                 const pf = pendingPrefill;
                 pendingPrefill = null;
-                setTimeout(() => applyFormPrefill(type, pf), 50);
+                setTimeout(() => {
+                    applyFormPrefill(type, pf);
+                    // 编辑模式：把保存按钮文字改为"保存修改"
+                    if (pendingEdit) {
+                        const btn = document.querySelector('#input-form-container .btn-primary');
+                        if (btn && !btn.id) btn.textContent = '保存修改';
+                    }
+                }, 50);
             }
         }
         
@@ -2403,8 +2476,92 @@
             if (grp) grp.style.display = chk?.checked ? 'block' : 'none';
         }
 
+        function selectNightSleepType(type) {
+            document.getElementById('nightsleep-type').value = type;
+            const bedBtn  = document.getElementById('ns-btn-bed');
+            const wakeBtn = document.getElementById('ns-btn-wake');
+            const saveBtn = document.getElementById('ns-save-btn');
+            const infoEl  = document.getElementById('ns-found-info');
+            const errEl   = document.getElementById('ns-error-info');
+            if (type === '夜睡') {
+                bedBtn.style.background  = 'var(--primary)';  bedBtn.style.color = '#fff';  bedBtn.style.borderColor = 'var(--primary)';
+                wakeBtn.style.background = '#f5f5f7'; wakeBtn.style.color = 'var(--text)'; wakeBtn.style.borderColor = 'var(--border)';
+                saveBtn.textContent = '记录入睡时间';
+                infoEl.style.display = 'none';
+                errEl.style.display  = 'none';
+            } else {
+                wakeBtn.style.background = '#FF9500'; wakeBtn.style.color = '#fff'; wakeBtn.style.borderColor = '#FF9500';
+                bedBtn.style.background  = '#f5f5f7'; bedBtn.style.color = 'var(--text)'; bedBtn.style.borderColor = 'var(--border)';
+                saveBtn.textContent = '记录起床时间';
+                // 查找最近一次夜睡记录
+                const bedRecord = findLatestBedtime();
+                if (bedRecord) {
+                    const bedTime = bedRecord.start_time.substring(11,16);
+                    const bedDate = bedRecord.start_time.substring(0,10);
+                    infoEl.textContent = `找到入睡记录：${bedDate} ${bedTime}\n记录起床时间后将自动计算夜间睡眠时长。`;
+                    infoEl.style.display = 'block';
+                    errEl.style.display  = 'none';
+                } else {
+                    errEl.textContent = '未找到入睡记录，请先记录夜睡时间。';
+                    errEl.style.display  = 'block';
+                    infoEl.style.display = 'none';
+                }
+            }
+        }
+
+        function findLatestBedtime() {
+            const sleepRecords = currentData.sleep || [];
+            const bedRecords = sleepRecords.filter(r => r.note === '夜睡' && r.start_time);
+            bedRecords.sort((a, b) => new Date(b.start_time) - new Date(a.start_time));
+            return bedRecords[0] || null;
+        }
+
+        async function submitNightSleep() {
+            const nsType = document.getElementById('nightsleep-type').value;
+            const date   = document.getElementById('nightsleep-date').value;
+            const time   = document.getElementById('nightsleep-time').value;
+            const note   = document.getElementById('nightsleep-note')?.value || '';
+            if (!date || !time) { showToast('请选择日期和时间'); return; }
+
+            if (nsType === '夜睡') {
+                // 保存入睡标记
+                await submitRecord({
+                    type: 'sleep',
+                    start_time: `${date} ${time}:00`,
+                    end_time: '',
+                    duration_min: 0,
+                    note: '夜睡'
+                }, '夜间入睡');
+            } else {
+                // 查找最近的入睡记录
+                const bedRecord = findLatestBedtime();
+                if (!bedRecord) {
+                    showToast('未找到入睡记录，请先记录夜睡时间');
+                    return;
+                }
+                const start  = new Date(bedRecord.start_time.replace(' ', 'T'));
+                const end    = new Date(`${date}T${time}`);
+                let durationMin = Math.round((end - start) / 60000);
+                if (durationMin <= 0 || durationMin > 1440) {
+                    showToast('时间计算异常，请检查入睡和起床时间');
+                    return;
+                }
+                const h = Math.floor(durationMin / 60), m = durationMin % 60;
+                const label = `夜晚睡眠 ${h}小时${m > 0 ? m + '分钟' : ''}`;
+                if (!confirm(`${label}\n入睡: ${bedRecord.start_time.substring(0,16)}\n起床: ${date} ${time}\n\n确认保存？`)) return;
+                await submitRecord({
+                    type: 'sleep',
+                    start_time: bedRecord.start_time,
+                    end_time: `${date} ${time}:00`,
+                    duration_min: durationMin,
+                    note: '夜晚睡眠'
+                }, label);
+            }
+        }
+
         function closeInputModal() {
             document.getElementById('input-modal').classList.remove('active');
+            pendingEdit = null;
         }
         
         function selectDateForInput(type) {
@@ -2487,7 +2644,7 @@
             if (!container || !currentData.milestone) return;
             
             let html = '';
-            currentData.milestone.slice().reverse().forEach(m => {
+            [...currentData.milestone].sort((a, b) => (a.date || '').localeCompare(b.date || '')).forEach(m => {
                 html += `
                     <div class="milestone-item">
                         <div class="milestone-date">${m.date}</div>
@@ -2644,26 +2801,58 @@
             ctx.fillText('喝奶量 (ml)', 20, 20);
         }
         
-        // ========== WHO 标准数据 (男宝中位数, 0-24月) ==========
+        // ========== WHO 标准数据 (男宝, 0-24月, P3/P15/P50/P85/P97) ==========
         const WHO_BOYS = {
-            weight: [3.3,4.5,5.6,6.4,7.0,7.5,7.9,8.3,8.6,8.9,9.2,9.4,9.6,9.9,10.1,10.3,10.5,10.7,10.9,11.1,11.3,11.5,11.8,12.0,12.2],
-            height: [49.9,54.7,58.4,61.4,63.9,65.9,67.6,69.2,70.6,72.0,73.3,74.5,75.7,76.9,78.0,79.1,80.2,81.2,82.3,83.2,84.2,85.1,86.0,86.9,87.8],
-            head:   [34.5,37.3,39.1,40.5,41.6,42.6,43.3,44.0,44.5,45.0,45.5,45.8,46.2,46.5,46.8,47.2,47.4,47.7,47.9,48.1,48.4,48.5,48.7,48.9,49.1]
+            weight: {
+                P3:  [2.5,3.4,4.3,5.0,5.6,6.0,6.4,6.7,6.9,7.1,7.4,7.6,7.7,7.9,8.1,8.3,8.4,8.6,8.8,9.0,9.1,9.3,9.4,9.6,9.7],
+                P15: [2.9,3.9,4.9,5.7,6.2,6.7,7.1,7.4,7.7,7.9,8.2,8.4,8.6,8.8,9.0,9.2,9.4,9.6,9.8,10.0,10.1,10.3,10.5,10.7,10.8],
+                P50: [3.3,4.5,5.6,6.4,7.0,7.5,7.9,8.3,8.6,8.9,9.2,9.4,9.6,9.9,10.1,10.3,10.5,10.7,10.9,11.1,11.3,11.5,11.8,12.0,12.2],
+                P85: [3.9,5.1,6.4,7.2,7.9,8.4,8.9,9.3,9.6,9.9,10.2,10.5,10.8,11.0,11.3,11.5,11.7,12.0,12.2,12.5,12.7,12.9,13.2,13.4,13.6],
+                P97: [4.3,5.7,7.0,8.0,8.7,9.3,9.8,10.3,10.7,11.0,11.4,11.7,12.0,12.3,12.6,12.8,13.1,13.4,13.7,14.0,14.2,14.5,14.7,15.0,15.3]
+            },
+            height: {
+                P3:  [46.1,50.8,54.4,57.3,59.7,61.7,63.3,64.8,66.2,67.5,68.7,69.9,71.0,72.1,73.1,74.1,75.0,75.9,76.9,77.7,78.6,79.4,80.2,81.0,81.7],
+                P15: [48.1,52.8,56.4,59.4,61.8,63.8,65.5,67.0,68.4,69.7,71.0,72.2,73.4,74.5,75.6,76.6,77.6,78.6,79.6,80.5,81.4,82.3,83.1,84.0,84.8],
+                P50: [49.9,54.7,58.4,61.4,63.9,65.9,67.6,69.2,70.6,72.0,73.3,74.5,75.7,76.9,78.0,79.1,80.2,81.2,82.3,83.2,84.2,85.1,86.0,86.9,87.8],
+                P85: [51.8,56.7,60.5,63.5,66.0,68.1,69.8,71.3,72.8,74.2,75.6,76.9,78.1,79.3,80.5,81.7,82.8,83.9,85.0,86.0,87.0,88.0,89.0,89.9,90.9],
+                P97: [53.7,58.5,62.4,65.5,68.0,70.1,71.9,73.5,75.0,76.5,77.9,79.2,80.5,81.8,83.0,84.2,85.4,86.5,87.7,88.8,89.9,90.9,91.9,92.9,93.9]
+            },
+            head: {
+                P3:  [32.1,34.9,36.7,38.0,39.0,39.9,40.5,41.1,41.7,42.1,42.5,42.8,43.1,43.4,43.7,43.9,44.1,44.3,44.4,44.6,44.7,44.9,45.0,45.2,45.3],
+                P15: [33.4,36.1,37.9,39.2,40.3,41.2,41.9,42.5,43.0,43.5,43.9,44.3,44.6,44.9,45.2,45.4,45.6,45.8,46.0,46.2,46.3,46.5,46.6,46.8,46.9],
+                P50: [34.5,37.3,39.1,40.5,41.6,42.6,43.3,44.0,44.5,45.0,45.5,45.8,46.2,46.5,46.8,47.2,47.4,47.7,47.9,48.1,48.4,48.5,48.7,48.9,49.1],
+                P85: [35.7,38.4,40.3,41.7,42.8,43.8,44.5,45.1,45.7,46.1,46.6,47.0,47.3,47.7,47.9,48.2,48.4,48.7,48.9,49.1,49.3,49.5,49.6,49.8,50.0],
+                P97: [36.9,39.6,41.4,42.9,44.0,45.0,45.8,46.4,47.0,47.4,47.9,48.3,48.6,49.0,49.3,49.5,49.8,50.0,50.2,50.4,50.6,50.8,51.0,51.1,51.3]
+            }
         };
+
+        // 计算宝宝最新值处于哪个百分位区间
+        function calcPercentile(metricKey, value, monthAge) {
+            const key = metricKey === 'weight_kg' ? 'weight' : metricKey === 'height_cm' ? 'height' : 'head';
+            const data = WHO_BOYS[key];
+            const m = Math.min(24, Math.max(0, Math.round(monthAge)));
+            const p3=data.P3[m], p15=data.P15[m], p50=data.P50[m], p85=data.P85[m], p97=data.P97[m];
+            if (value < p3)  return '< P3';
+            if (value < p15) return `P3–P15`;
+            if (value < p50) return `P15–P50`;
+            if (value < p85) return `P50–P85`;
+            if (value < p97) return `P85–P97`;
+            return '> P97';
+        }
 
         function renderSingleGrowthChart(canvasId, metricKey, color, unit) {
             const canvas = document.getElementById(canvasId);
             if (!canvas) return;
             const dpr = window.devicePixelRatio || 1;
             const rect = canvas.parentElement.getBoundingClientRect();
-            canvas.width = Math.floor(rect.width * dpr) || 700;
-            canvas.height = Math.floor(180 * dpr);
-            canvas.style.width = '100%'; canvas.style.height = '180px';
+            canvas.width  = Math.floor(rect.width * dpr) || 700;
+            canvas.height = Math.floor(210 * dpr);
+            canvas.style.width = '100%'; canvas.style.height = '210px';
             const ctx = canvas.getContext('2d');
             ctx.scale(dpr, dpr);
-            const W = Math.floor(rect.width) || 350, H = 180;
+            const W = Math.floor(rect.width) || 350, H = 210;
             ctx.clearRect(0, 0, W, H);
-            const pad = { l:42, r:16, t:18, b:30 };
+            const pad = { l:44, r:52, t:22, b:30 };
             const cW = W - pad.l - pad.r, cH = H - pad.t - pad.b;
 
             const birth = new Date(BIRTH_DATE_STR + 'T00:00:00');
@@ -2674,15 +2863,16 @@
                 return isNaN(v) || v <= 0 ? null : { m, v, date: r.date };
             }).filter(Boolean);
 
-            const who = WHO_BOYS[metricKey === 'weight_kg' ? 'weight' : metricKey === 'height_cm' ? 'height' : 'head'];
+            const whoKey = metricKey === 'weight_kg' ? 'weight' : metricKey === 'height_cm' ? 'height' : 'head';
+            const who = WHO_BOYS[whoKey];
             const maxM = Math.max(24, ...(pts.map(p => p.m)));
-            const allVals = [...pts.map(p => p.v), ...who];
-            const minV = Math.min(...allVals) * 0.95, maxV = Math.max(...allVals) * 1.05;
+            const allVals = [...pts.map(p => p.v), ...who.P3, ...who.P97];
+            const minV = Math.min(...allVals) * 0.97, maxV = Math.max(...allVals) * 1.03;
 
             const toX = m => pad.l + (m / maxM) * cW;
             const toY = v => pad.t + cH - ((v - minV) / (maxV - minV)) * cH;
 
-            // grid
+            // grid lines
             ctx.strokeStyle = '#eee'; ctx.lineWidth = 1;
             for (let i = 0; i <= 4; i++) {
                 const y = pad.t + (i / 4) * cH;
@@ -2692,11 +2882,31 @@
                 ctx.fillText(val, pad.l - 3, y + 3);
             }
 
-            // WHO median
-            ctx.strokeStyle = 'rgba(52,199,89,0.5)'; ctx.lineWidth = 1.5; ctx.setLineDash([4,3]);
-            ctx.beginPath();
-            who.forEach((v, i) => { i === 0 ? ctx.moveTo(toX(i), toY(v)) : ctx.lineTo(toX(i), toY(v)); });
-            ctx.stroke(); ctx.setLineDash([]);
+            // WHO percentile lines
+            const whoLines = [
+                { key: 'P3',  dash: [3,3], alpha: 0.25, label: 'P3' },
+                { key: 'P15', dash: [4,3], alpha: 0.35, label: 'P15' },
+                { key: 'P50', dash: [],    alpha: 0.60, label: 'P50' },
+                { key: 'P85', dash: [4,3], alpha: 0.35, label: 'P85' },
+                { key: 'P97', dash: [3,3], alpha: 0.25, label: 'P97' }
+            ];
+            whoLines.forEach(({ key, dash, alpha, label }) => {
+                const vals = who[key];
+                ctx.strokeStyle = `rgba(52,199,89,${alpha})`;
+                ctx.lineWidth = key === 'P50' ? 1.8 : 1.2;
+                ctx.setLineDash(dash);
+                ctx.beginPath();
+                vals.forEach((v, i) => { i === 0 ? ctx.moveTo(toX(i), toY(v)) : ctx.lineTo(toX(i), toY(v)); });
+                ctx.stroke();
+                // right-side label
+                const lastV = vals[Math.min(Math.floor(maxM), vals.length - 1)];
+                ctx.setLineDash([]);
+                ctx.fillStyle = `rgba(52,170,68,${Math.min(alpha + 0.2, 0.7)})`;
+                ctx.font = key === 'P50' ? 'bold 9px sans-serif' : '9px sans-serif';
+                ctx.textAlign = 'left';
+                ctx.fillText(label, toX(maxM) + 4, toY(lastV) + 3);
+            });
+            ctx.setLineDash([]);
 
             if (pts.length === 0) {
                 ctx.fillStyle = '#aaa'; ctx.font = '12px sans-serif'; ctx.textAlign = 'center';
@@ -2704,26 +2914,33 @@
             }
 
             // data line
-            ctx.strokeStyle = color; ctx.lineWidth = 2;
+            ctx.strokeStyle = color; ctx.lineWidth = 2.2;
             ctx.beginPath();
             pts.forEach((p, i) => { i === 0 ? ctx.moveTo(toX(p.m), toY(p.v)) : ctx.lineTo(toX(p.m), toY(p.v)); });
             ctx.stroke();
 
-            // dots + labels
-            pts.forEach(p => {
+            // dots + value labels
+            pts.forEach((p, pi) => {
                 const x = toX(p.m), y = toY(p.v);
                 ctx.fillStyle = color; ctx.beginPath(); ctx.arc(x, y, 4, 0, Math.PI*2); ctx.fill();
-                ctx.fillStyle = '#333'; ctx.font = 'bold 10px sans-serif'; ctx.textAlign = 'center';
-                ctx.fillText(p.v.toFixed(metricKey === 'weight_kg' ? 1 : 1), x, y - 7);
-                const dp = p.date.split('-'); ctx.fillStyle = '#999'; ctx.font = '9px sans-serif';
-                ctx.fillText(`${parseInt(dp[1])}/​${parseInt(dp[2])}`, x, pad.t + cH + 18);
+                ctx.fillStyle = 'white'; ctx.beginPath(); ctx.arc(x, y, 2, 0, Math.PI*2); ctx.fill();
+                ctx.fillStyle = '#333'; ctx.font = 'bold 9.5px sans-serif'; ctx.textAlign = 'center';
+                ctx.fillText(p.v.toFixed(metricKey === 'weight_kg' ? 1 : 1), x, y - 8);
+                const dp = p.date.split('-');
+                ctx.fillStyle = '#aaa'; ctx.font = '8.5px sans-serif';
+                ctx.fillText(`${parseInt(dp[1])}/${parseInt(dp[2])}`, x, pad.t + cH + 18);
             });
 
-            // legend
-            ctx.setLineDash([4,3]); ctx.strokeStyle = 'rgba(52,199,89,0.6)'; ctx.lineWidth = 1.5;
-            ctx.beginPath(); ctx.moveTo(W-80, 10); ctx.lineTo(W-60, 10); ctx.stroke(); ctx.setLineDash([]);
-            ctx.fillStyle = '#666'; ctx.font = '9px sans-serif'; ctx.textAlign = 'left';
-            ctx.fillText('WHO中位', W-58, 13);
+            // percentile badge for latest point
+            if (pts.length > 0) {
+                const latest = pts[pts.length - 1];
+                const pBand = calcPercentile(metricKey, latest.v, latest.m);
+                const bx = 4, by = 4, bw = 62, bh = 15;
+                ctx.fillStyle = 'rgba(0,122,255,0.12)';
+                ctx.beginPath(); ctx.roundRect(bx, by, bw, bh, 4); ctx.fill();
+                ctx.fillStyle = '#007AFF'; ctx.font = 'bold 9px sans-serif'; ctx.textAlign = 'left';
+                ctx.fillText(`最新: ${pBand}`, bx + 5, by + 10.5);
+            }
         }
 
         function renderGrowthChart() {
@@ -2916,6 +3133,13 @@
             img.src = getDriveThumbnailUrl(photo.drive_url);
             img.onerror = () => { img.src = photo.drive_url; };
 
+            // 显示时间戳
+            const tsEl = document.getElementById('viewer-timestamp');
+            if (tsEl) {
+                const ts = photo.timestamp || '';
+                tsEl.textContent = ts ? ts.substring(0,16).replace('T',' ') : '';
+                tsEl.style.display = ts ? 'block' : 'none';
+            }
             // 显示备注
             if (captionEl) {
                 const cap = photo.caption || '';
@@ -2971,6 +3195,8 @@
             if (delBtn) delBtn.style.display = 'none';
             const captionEl = document.getElementById('viewer-caption');
             if (captionEl) { captionEl.textContent = ''; captionEl.style.display = 'none'; }
+            const tsEl = document.getElementById('viewer-timestamp');
+            if (tsEl) { tsEl.textContent = ''; tsEl.style.display = 'none'; }
             viewerPhotoRecord = null;
         }
         
@@ -3004,29 +3230,12 @@
 
         async function editTimelineRecord(idx, event) {
             if (event) event.stopPropagation();
-
             const item = todayTimelineRecords[idx];
             if (!item) return;
-
-            if (!confirm('编辑将删除旧记录并重新填写，是否继续？')) return;
-
             const { recordType, record, originalIdx } = item;
-            const row_idx = originalIdx + 2;
-
-            try {
-                const res = await fetch('/api/delete', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ type: recordType, row_idx })
-                });
-                if (!res.ok) console.warn('删除旧记录失败');
-                await fetchData();
-            } catch (err) {
-                console.error('删除旧记录错误:', err);
-            }
-
+            // 存储旧记录信息，等到用户确认保存时再删除
+            pendingEdit = { recordType, row_idx: originalIdx + 2 };
             pendingPrefill = record;
-            switchPage('input');
             showInputForm(recordType);
         }
 
@@ -3208,6 +3417,24 @@
         
         async function submitRecord(data, typeName) {
             try {
+                const isEdit = !!pendingEdit;
+
+                // 修改模式：弹出确认对话框
+                if (isEdit) {
+                    if (!confirm(`确认修改此${typeName}记录？`)) return;
+                    // 删除旧记录
+                    try {
+                        await fetch('/api/delete', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ type: pendingEdit.recordType, row_idx: pendingEdit.row_idx })
+                        });
+                    } catch (e) {
+                        console.warn('删除旧记录失败:', e);
+                    }
+                    pendingEdit = null;
+                }
+
                 const res = await fetch('/api/add', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -3219,21 +3446,17 @@
                     throw new Error(errData.error || `HTTP ${res.status}`);
                 }
 
-                showToast(`${typeName}记录已保存`);
+                showToast(`${typeName}记录已${isEdit ? '修改' : '保存'}`);
                 closeInputModal();
 
-                // 刷新数据（失败不影响已保存的提示）
+                // 保存滚动位置，刷新后恢复
+                const savedScroll = window.scrollY;
                 try {
                     await fetchData();
                 } catch (refreshErr) {
                     console.error('刷新数据错误:', refreshErr);
                 }
-
-                // 切换回今日页面
-                if (document.getElementById('page-today').classList.contains('active')) {
-                    updateTodayStats();
-                    renderTodayTimeline();
-                }
+                window.scrollTo({ top: savedScroll, behavior: 'instant' });
             } catch (err) {
                 console.error('保存错误:', err);
                 showToast('保存失败: ' + err.message);
