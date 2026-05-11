@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 from functools import wraps
 
-from flask import Flask, render_template, request, jsonify, Response
+from flask import Flask, render_template, request, jsonify, Response, session, redirect, url_for
 from dotenv import load_dotenv
 import gspread
 from google.oauth2.service_account import Credentials
@@ -32,6 +32,10 @@ BIRTH_DATE = os.getenv('BIRTH_DATE', '2024-01-01')
 SHEET_ID = os.getenv('SHEET_ID', '')
 OWNER_EMAIL = os.getenv('OWNER_EMAIL', '')
 APP_PASSWORD = os.getenv('APP_PASSWORD', 'family')
+SECRET_KEY = os.getenv('SECRET_KEY', 'change-me-in-production')
+
+app.secret_key = SECRET_KEY
+app.permanent_session_lifetime = timedelta(days=30)
 
 # 时区设置 - 尝试使用 zoneinfo，失败则使用 UTC+8 固定偏移
 try:
@@ -207,29 +211,41 @@ def init_spreadsheet():
         return None
 
 
-# ========== 认证装饰器 ==========
-def check_auth(username, password):
-    """检查认证"""
-    return username == 'family' and password == APP_PASSWORD
-
-
-def authenticate():
-    """返回 401 响应"""
-    return Response(
-        '需要认证', 401,
-        {'WWW-Authenticate': 'Basic realm="Login Required"'}
-    )
-
-
+# ========== 认证 ==========
 def requires_auth(f):
-    """要求基本认证"""
+    """检查 session，未登录则跳转登录页"""
     @wraps(f)
     def decorated(*args, **kwargs):
-        auth = request.authorization
-        if not auth or not check_auth(auth.username, auth.password):
-            return authenticate()
+        if not session.get('logged_in'):
+            if request.path.startswith('/api/'):
+                return jsonify({'error': '未登录'}), 401
+            return redirect(url_for('login_page', next=request.url))
         return f(*args, **kwargs)
     return decorated
+
+
+@app.route('/login', methods=['GET', 'POST'])
+def login_page():
+    if session.get('logged_in'):
+        return redirect(url_for('index'))
+    error = None
+    if request.method == 'POST':
+        password = request.form.get('password', '')
+        remember = request.form.get('remember') == '1'
+        if password == APP_PASSWORD:
+            session['logged_in'] = True
+            session.permanent = remember   # remember=True 保孕30天, False关浏览器失效
+            next_url = request.form.get('next') or url_for('index')
+            return redirect(next_url)
+        error = '密码错误，请重试'
+    next_url = request.args.get('next', '')
+    return render_template('login.html', error=error, next=next_url)
+
+
+@app.route('/logout')
+def logout():
+    session.clear()
+    return redirect(url_for('login_page'))
 
 
 # ========== WHO 数据 ==========
