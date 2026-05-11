@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>萌夏宝宝记录 · 登录</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Helvetica Neue', sans-serif;
+            background: linear-gradient(160deg, #e8f4fd 0%, #f2f2f7 60%, #fce4ec 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+        }
+
+        .login-card {
+            background: rgba(255,255,255,0.92);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 24px;
+            box-shadow: 0 8px 40px rgba(0,0,0,0.12);
+            padding: 40px 32px 36px;
+            width: 100%;
+            max-width: 360px;
+        }
+
+        .app-icon {
+            width: 72px;
+            height: 72px;
+            background: linear-gradient(135deg, #007AFF, #5AC8FA);
+            border-radius: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            margin: 0 auto 20px;
+            box-shadow: 0 4px 16px rgba(0,122,255,0.3);
+        }
+
+        .app-name {
+            text-align: center;
+            font-size: 1.45rem;
+            font-weight: 700;
+            color: #1c1c1e;
+            letter-spacing: -0.3px;
+            margin-bottom: 6px;
+        }
+
+        .app-sub {
+            text-align: center;
+            font-size: 0.85rem;
+            color: #8e8e93;
+            margin-bottom: 32px;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #6d6d72;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 14px 16px;
+            border: 1.5px solid #e5e5ea;
+            border-radius: 12px;
+            font-size: 1rem;
+            background: #f9f9fb;
+            color: #1c1c1e;
+            outline: none;
+            transition: border-color 0.15s, box-shadow 0.15s;
+        }
+        .form-input:focus {
+            border-color: #007AFF;
+            box-shadow: 0 0 0 3px rgba(0,122,255,0.12);
+            background: #fff;
+        }
+
+        .remember-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 16px 0 24px;
+            cursor: pointer;
+        }
+        .remember-row input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            accent-color: #007AFF;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+        .remember-row span {
+            font-size: 0.92rem;
+            color: #3c3c43;
+            user-select: none;
+        }
+        .remember-note {
+            font-size: 0.78rem;
+            color: #8e8e93;
+            margin-left: auto;
+            white-space: nowrap;
+        }
+
+        .btn-login {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #007AFF, #5AC8FA);
+            color: #fff;
+            border: none;
+            border-radius: 14px;
+            font-size: 1rem;
+            font-weight: 600;
+            letter-spacing: 0.3px;
+            cursor: pointer;
+            box-shadow: 0 4px 16px rgba(0,122,255,0.3);
+            transition: opacity 0.15s, transform 0.1s;
+        }
+        .btn-login:active {
+            opacity: 0.85;
+            transform: scale(0.98);
+        }
+
+        .error-box {
+            background: #fff2f2;
+            border: 1.5px solid #ffcccc;
+            border-radius: 10px;
+            padding: 10px 14px;
+            margin-bottom: 16px;
+            font-size: 0.88rem;
+            color: #d0021b;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-card">
+        <div class="app-icon">👶</div>
+        <div class="app-name">萌夏宝宝记录</div>
+        <div class="app-sub">家庭专属 · 安全登录</div>
+
+        {% if error %}
+        <div class="error-box">⚠️ {{ error }}</div>
+        {% endif %}
+
+        <form method="POST" action="/login">
+            <input type="hidden" name="next" value="{{ next }}">
+
+            <div class="form-group">
+                <label class="form-label">访问密码</label>
+                <input
+                    type="password"
+                    name="password"
+                    class="form-input"
+                    placeholder="输入密码"
+                    autocomplete="current-password"
+                    autofocus
+                >
+            </div>
+
+            <label class="remember-row">
+                <input type="checkbox" name="remember" value="1" checked>
+                <span>记住我</span>
+                <span class="remember-note">30天内免登录</span>
+            </label>
+
+            <button type="submit" class="btn-login">进入应用</button>
+        </form>
+    </div>
+</body>
+</html>
