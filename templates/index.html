@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>宝宝成长记录</title>
+    <title>孟夏宝宝记录</title>
     <style>
         * {
             margin: 0;
@@ -1400,7 +1400,7 @@
             <div class="overview-grid">
                 <div class="overview-item">
                     <div class="overview-value" id="today-milk">0</div>
-                    <div class="overview-label">喝奶 ml</div>
+                    <div class="overview-label">喂奶 ml</div>
                 </div>
                 <div class="overview-item">
                     <div class="overview-value" id="today-sleep">0</div>
@@ -1589,7 +1589,7 @@
         
         <!-- 喝奶统计 -->
         <div class="chart-container">
-            <div class="chart-title">🍼 喝奶统计</div>
+            <div class="chart-title">🍼 喂奶统计</div>
             <div class="period-selector">
                 <div class="period-btn active" onclick="changePeriod(7, event)">7天</div>
                 <div class="period-btn" onclick="changePeriod(14, event)">14天</div>
@@ -1598,6 +1598,17 @@
             <canvas id="milk-chart" width="350" height="200"></canvas>
         </div>
         
+        <!-- 睡眠统计 -->
+        <div class="chart-container">
+            <div class="chart-title">😴 睡眠统计</div>
+            <div class="period-selector" id="sleep-period-selector">
+                <div class="period-btn active" onclick="changeSleepPeriod(7, event)">7天</div>
+                <div class="period-btn" onclick="changeSleepPeriod(14, event)">14天</div>
+                <div class="period-btn" onclick="changeSleepPeriod(30, event)">30天</div>
+            </div>
+            <canvas id="sleep-stat-chart" width="350" height="200"></canvas>
+        </div>
+
         <!-- 体重 -->
         <div class="chart-container">
             <div class="chart-title">⚖️ 体重 (kg)</div>
@@ -1799,6 +1810,7 @@
                 renderMilestoneTimeline();
             } else if (pageName === 'growth') {
                 renderMilkChart();
+                renderSleepChart();
                 renderGrowthChart();
             }
         }
@@ -1875,8 +1887,11 @@
                 currentData.sleep.forEach(r => {
                     if (r.note === '夜睡') return; // 入睡标记，不计入统计
                     const dur = parseInt(r.duration_min) || 0;
-                    if (r.start_time?.startsWith(todayStr) || r.end_time?.startsWith(todayStr)) {
-                        sleepTotal += dur;
+                    if (r.note === '夜晚睡眠') {
+                        // 跨夜睡眠：只归入起床当天（end_time）
+                        if (r.end_time?.startsWith(todayStr)) sleepTotal += dur;
+                    } else {
+                        if (r.start_time?.startsWith(todayStr)) sleepTotal += dur;
                     }
                 });
             }
@@ -2325,6 +2340,16 @@
                             </div>
                         </div>
                     </div>
+                    <div id="sleep-duration-box" style="display:none;background:#E3F2FD;border-radius:10px;padding:10px 14px;margin-bottom:8px;font-size:0.88rem;color:#1565C0;">
+                        计算时长：<span id="sleep-duration-text" style="font-weight:600;">--</span>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">睡眠时长 <span style="color:#999;font-weight:400;">(分钟，可修改)</span></label>
+                        <div style="display:flex;align-items:center;gap:8px;">
+                            <input type="number" class="form-input" id="sleep-duration-override" placeholder="分钟" min="0" max="999" style="text-align:center;flex:1;">
+                            <span style="color:#666;font-size:0.9rem;white-space:nowrap;">分钟</span>
+                        </div>
+                    </div>
                     <div class="form-group">
                         <label class="form-label">备注 <span style="color:#999;font-weight:400;">(可选)</span></label>
                         <input type="text" class="form-input" id="sleep-note" placeholder="添加备注...">
@@ -2588,7 +2613,28 @@
                 const input = document.getElementById(`${baseType}-${suffix}`);
                 if (display) display.textContent = time;
                 if (input) input.value = time;
+
+                // 短睡时长实时计算
+                if (baseType === 'sleep') updateSleepDuration();
             });
+        }
+
+        function updateSleepDuration() {
+            const startVal = document.getElementById('sleep-start')?.value;
+            const endVal   = document.getElementById('sleep-end')?.value;
+            const dateVal  = document.getElementById('sleep-date')?.value;
+            if (!startVal || !endVal || !dateVal) return;
+            const start = new Date(`${dateVal}T${startVal}`);
+            let end = new Date(`${dateVal}T${endVal}`);
+            if (end <= start) end = new Date(end.getTime() + 86400000); // 跨日
+            const min = Math.max(0, Math.round((end - start) / 60000));
+            const h = Math.floor(min / 60), m = min % 60;
+            const box  = document.getElementById('sleep-duration-box');
+            const text = document.getElementById('sleep-duration-text');
+            const ovEl = document.getElementById('sleep-duration-override');
+            if (box)  box.style.display = 'block';
+            if (text) text.textContent = `${h > 0 ? h + '小时' : ''}${m > 0 ? m + '分钟' : (h === 0 ? '0分钟' : '')}`;
+            if (ovEl) ovEl.value = min;
         }
         
         // ========== 日历页面 ==========
@@ -2648,7 +2694,7 @@
             if (!container || !currentData.milestone) return;
             
             let html = '';
-            [...currentData.milestone].sort((a, b) => (a.date || '').localeCompare(b.date || '')).forEach(m => {
+            [...currentData.milestone].sort((a, b) => (b.date || '').localeCompare(a.date || '')).forEach(m => {
                 html += `
                     <div class="milestone-item">
                         <div class="milestone-date">${m.date}</div>
@@ -2663,55 +2709,101 @@
             container.innerHTML = html || '<div style="text-align: center; color: var(--text-light); padding: 20px;">暂无里程碑记录</div>';
         }
         
+        let calendarDetailRecords = []; // { recordType, record, originalIdx }
+
         function showDateDetails(dateStr) {
             const typeConfig = {
-                milk:      { icon: '🍼', name: '喂奶',   timeKey: 'timestamp' },
-                food:      { icon: '🍚', name: '辅食',   timeKey: 'timestamp' },
-                poop:      { icon: '💩', name: '换尿布', timeKey: 'timestamp' },
-                sleep:     { icon: '😴', name: '睡眠',   timeKey: 'start_time' },
-                milestone: { icon: '🎯', name: '里程碑', timeKey: 'date' },
-                photo:     { icon: '📸', name: '照片',   timeKey: 'timestamp' }
+                milk:      { icon: '🍼', color: 'milk',  name: '喂奶',   timeKey: 'timestamp' },
+                food:      { icon: '🍚', color: 'food',  name: '辅食',   timeKey: 'timestamp' },
+                poop:      { icon: '💩', color: 'poop',  name: '换尿布', timeKey: 'timestamp' },
+                sleep:     { icon: '😴', color: 'sleep', name: '睡眠',   timeKey: 'start_time' },
+                milestone: { icon: '🎯', color: 'milestone', name: '里程碑', timeKey: 'date' },
+                photo:     { icon: '📸', color: 'photo', name: '照片',   timeKey: 'timestamp' }
             };
 
-            document.getElementById('date-details-title').textContent = `${dateStr} 的记录`;
+            document.getElementById('date-details-title').textContent = dateStr;
+            calendarDetailRecords = [];
 
-            let html = '';
-            let hasRecords = false;
-
+            // 收集当日所有记录，附原始索引
             Object.keys(typeConfig).forEach(recordType => {
                 const cfg = typeConfig[recordType];
-                const dayRecords = (currentData[recordType] || []).filter(r =>
-                    (r[cfg.timeKey] || '').startsWith(dateStr)
-                );
-
-                dayRecords.forEach(r => {
-                    hasRecords = true;
-                    const time = (r.timestamp || r.start_time || '').split(' ')[1]?.substring(0, 5) || '';
-                    let desc = '';
-                    if (recordType === 'milk')      desc = `${r.amount_ml}ml  ${time}`;
-                    else if (recordType === 'food') desc = `${r.food_type || ''} ${r.amount || ''}  ${time}`;
-                    else if (recordType === 'poop') desc = `${r.type || '排便'} ${r.color || ''}  ${time}`;
-                    else if (recordType === 'sleep') {
-                        const end = (r.end_time || '').split(' ')[1]?.substring(0,5) || '';
-                        desc = `${r.duration_min}分钟 (${time}–${end})`;
+                (currentData[recordType] || []).forEach((record, originalIdx) => {
+                    const t = (record[cfg.timeKey] || '');
+                    // 夜晚睡眠：按 end_time 归入起床当天
+                    const matchEnd = record.note === '夜晚睡眠' && (record.end_time || '').startsWith(dateStr);
+                    if (t.startsWith(dateStr) || matchEnd) {
+                        calendarDetailRecords.push({ recordType, record, originalIdx });
                     }
-                    else if (recordType === 'milestone') desc = `${r.category}: ${r.description}`;
-                    else if (recordType === 'photo')     desc = r.caption || '照片';
-
-                    html += `
-                        <div class="timeline-item">
-                            <div class="timeline-icon ${recordType}">${cfg.icon}</div>
-                            <div class="timeline-content">
-                                <div class="timeline-title">${cfg.name}</div>
-                                <div class="timeline-meta">${desc}</div>
-                            </div>
-                        </div>
-                    `;
                 });
             });
 
-            if (!hasRecords) {
-                html = '<div style="text-align:center;padding:20px;color:#999;">当日暂无记录</div>';
+            // 按时间排序
+            calendarDetailRecords.sort((a, b) => {
+                const ta = a.record.timestamp || a.record.start_time || a.record.date || '';
+                const tb = b.record.timestamp || b.record.start_time || b.record.date || '';
+                return ta.localeCompare(tb);
+            });
+
+            let html = '';
+            if (calendarDetailRecords.length === 0) {
+                html = '<div style="text-align:center;padding:28px 0;color:#999;">当日暂无记录</div>';
+            } else {
+                calendarDetailRecords.forEach((item, i) => {
+                    const { recordType, record } = item;
+                    const cfg = typeConfig[recordType];
+                    const time = (record.timestamp || record.start_time || '').split(' ')[1]?.substring(0, 5) || '';
+                    let title = cfg.name, desc = '';
+
+                    if (recordType === 'milk') {
+                        title = `喂奶 ${record.amount_ml || ''}ml`;
+                        desc = time;
+                    } else if (recordType === 'food') {
+                        title = `辅食 ${record.food_type || ''}`;
+                        desc = `${record.amount || ''}  ${time}`;
+                    } else if (recordType === 'poop') {
+                        title = `换尿布`;
+                        desc = `${record.type || ''} ${record.color || ''}  ${time}`;
+                    } else if (recordType === 'sleep') {
+                        if (record.note === '夜睡') { title = '夜间入睡'; desc = time; }
+                        else if (record.note === '夜晚睡眠') {
+                            const h = Math.floor(record.duration_min/60), m = record.duration_min%60;
+                            title = `夜晚睡眠 ${h}h${m > 0 ? m+'m' : ''}`;
+                            const endT = (record.end_time || '').split(' ')[1]?.substring(0,5) || '';
+                            desc = `入睡${time} 起床${endT}`;
+                        } else {
+                            const endT = (record.end_time || '').split(' ')[1]?.substring(0,5) || '';
+                            title = `睡眠 ${record.duration_min || 0}分`;
+                            desc = `${time}–${endT}`;
+                        }
+                    } else if (recordType === 'milestone') {
+                        title = record.category || '里程碑';
+                        desc = record.description || '';
+                    } else if (recordType === 'photo') {
+                        title = '照片';
+                        desc = record.caption || '';
+                    }
+
+                    const noteHtml = (record.note && !['夜睡','夜晚睡眠'].includes(record.note))
+                        ? `<div style="font-size:0.78rem;color:#888;margin-top:2px;">💬 ${record.note}</div>` : '';
+
+                    const photoHtml = (recordType === 'photo' && record.drive_url)
+                        ? `<img src="${getDriveThumbnailUrl(record.drive_url)}" style="width:72px;height:72px;object-fit:cover;border-radius:10px;margin-top:6px;flex-shrink:0;" onclick="event.stopPropagation();viewPhoto(${item.originalIdx})" onerror="this.style.display='none'">` : '';
+
+                    html += `
+                        <div style="display:flex;align-items:flex-start;gap:10px;padding:10px 4px;border-bottom:1px solid var(--border);">
+                            <div class="timeline-icon ${cfg.color}" style="flex-shrink:0;">${cfg.icon}</div>
+                            <div style="flex:1;min-width:0;">
+                                <div style="font-weight:600;font-size:0.93rem;">${title}</div>
+                                <div style="font-size:0.82rem;color:#666;margin-top:1px;">${desc}</div>
+                                ${noteHtml}
+                                ${photoHtml}
+                            </div>
+                            <div style="display:flex;gap:6px;flex-shrink:0;">
+                                <div class="timeline-delete" style="color:#007AFF;" onclick="editCalendarRecord(${i}, event)">编辑</div>
+                                <div class="timeline-delete" onclick="deleteCalendarRecord(${i}, event)">删除</div>
+                            </div>
+                        </div>`;
+                });
             }
 
             document.getElementById('date-details-content').innerHTML = html;
@@ -2721,17 +2813,115 @@
         function closeDateDetailsModal() {
             document.getElementById('date-details-modal').classList.remove('active');
         }
+
+        async function editCalendarRecord(idx, event) {
+            if (event) event.stopPropagation();
+            const item = calendarDetailRecords[idx];
+            if (!item) return;
+            const { recordType, record, originalIdx } = item;
+            closeDateDetailsModal();
+            pendingEdit = { recordType, row_idx: originalIdx + 2 };
+            pendingPrefill = record;
+            showInputForm(recordType);
+        }
+
+        async function deleteCalendarRecord(idx, event) {
+            if (event) event.stopPropagation();
+            const item = calendarDetailRecords[idx];
+            if (!item) return;
+            if (!confirm('确认删除此记录？')) return;
+            const { recordType, originalIdx } = item;
+            try {
+                const res = await fetch('/api/delete', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ type: recordType, row_idx: originalIdx + 2 })
+                });
+                if (!res.ok) throw new Error('删除失败');
+                showToast('已删除');
+                closeDateDetailsModal();
+                await fetchData();
+            } catch (err) {
+                showToast('删除失败: ' + err.message);
+            }
+        }
         
         // ========== 成长页面 ==========
         let currentPeriod = 7;
         
+        let currentSleepPeriod = 7;
+
         function changePeriod(days, e) {
             currentPeriod = days;
-            document.querySelectorAll('.period-btn').forEach(btn => {
-                btn.classList.remove('active');
-            });
+            document.querySelectorAll('#page-growth .period-selector:not(#sleep-period-selector) .period-btn').forEach(btn => btn.classList.remove('active'));
             if (e && e.target) e.target.classList.add('active');
             renderMilkChart();
+        }
+
+        function changeSleepPeriod(days, e) {
+            currentSleepPeriod = days;
+            document.querySelectorAll('#sleep-period-selector .period-btn').forEach(btn => btn.classList.remove('active'));
+            if (e && e.target) e.target.classList.add('active');
+            renderSleepChart();
+        }
+
+        function renderSleepChart() {
+            const canvas = document.getElementById('sleep-stat-chart');
+            if (!canvas || !currentData.sleep) return;
+
+            const dpr = window.devicePixelRatio || 1;
+            const rect = canvas.parentElement.getBoundingClientRect();
+            canvas.width  = Math.floor(rect.width * dpr) || 700;
+            canvas.height = Math.floor(200 * dpr);
+            canvas.style.width = '100%'; canvas.style.height = '200px';
+            const ctx = canvas.getContext('2d');
+            ctx.scale(dpr, dpr);
+            const width = Math.floor(rect.width) || 350;
+            const height = 200;
+            ctx.clearRect(0, 0, width, height);
+
+            const days = [];
+            const today = new Date();
+            for (let i = currentSleepPeriod - 1; i >= 0; i--) {
+                const d = new Date(today); d.setDate(d.getDate() - i); days.push(d);
+            }
+
+            const dailySleep = days.map(d => {
+                const dateStr = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+                let total = 0;
+                (currentData.sleep || []).forEach(r => {
+                    if (r.note === '夜睡') return;
+                    const dur = parseInt(r.duration_min) || 0;
+                    if (r.note === '夜晚睡眠') {
+                        if ((r.end_time || '').startsWith(dateStr)) total += dur;
+                    } else {
+                        if ((r.start_time || '').startsWith(dateStr)) total += dur;
+                    }
+                });
+                return { date: d.getDate(), mins: total, fullDate: `${d.getMonth()+1}/${d.getDate()}` };
+            });
+
+            const barWidth = (width - 40) / dailySleep.length;
+            const maxMins  = Math.max(...dailySleep.map(d => d.mins), 60);
+
+            dailySleep.forEach((d, i) => {
+                const barH = d.mins > 0 ? Math.max((d.mins / maxMins) * (height - 80), 5) : 0;
+                const x = 20 + i * barWidth + barWidth * 0.2;
+                const y = height - 50 - barH;
+                if (d.mins > 0) {
+                    ctx.fillStyle = '#5856D6';
+                    ctx.fillRect(x, y, barWidth * 0.6, barH);
+                    ctx.fillStyle = '#333';
+                    ctx.font = 'bold 10px sans-serif'; ctx.textAlign = 'center';
+                    const hrs = (d.mins / 60).toFixed(1);
+                    ctx.fillText(`${hrs}h`, x + barWidth * 0.3, y - 5);
+                }
+                ctx.fillStyle = '#666'; ctx.font = '10px sans-serif'; ctx.textAlign = 'center';
+                ctx.fillText(`${d.fullDate}`, x + barWidth * 0.3, height - 30);
+            });
+
+            ctx.fillStyle = '#333'; ctx.font = 'bold 14px sans-serif'; ctx.textAlign = 'left';
+            ctx.fillText('睡眠时长 (小时)', 20, 20);
         }
         
         function renderMilkChart() {
@@ -2783,8 +2973,6 @@
                 if (d.amount > 0) {
                     ctx.fillStyle = '#007AFF';
                     ctx.fillRect(x, y, barWidth * 0.6, barHeight);
-
-                    // 绘制数值
                     ctx.fillStyle = '#333';
                     ctx.font = 'bold 11px sans-serif';
                     ctx.textAlign = 'center';
@@ -2802,7 +2990,7 @@
             ctx.fillStyle = '#333';
             ctx.font = 'bold 14px sans-serif';
             ctx.textAlign = 'left';
-            ctx.fillText('喝奶量 (ml)', 20, 20);
+            ctx.fillText('喂奶量 (ml)', 20, 20);
         }
         
         // ========== WHO 标准数据 (男宝, 0-24月, P3/P15/P50/P85/P97) ==========
@@ -2869,14 +3057,27 @@
 
             const whoKey = metricKey === 'weight_kg' ? 'weight' : metricKey === 'height_cm' ? 'height' : 'head';
             const who = WHO_BOYS[whoKey];
-            const maxM = Math.max(24, ...(pts.map(p => p.m)));
-            const allVals = [...pts.map(p => p.v), ...who.P3, ...who.P97];
+
+            // Smart X range: ±2 months around actual data, min 3-month window, capped 0–24
+            const dataMonths = pts.map(p => p.m);
+            const xMin = pts.length ? Math.max(0,  Math.floor(Math.min(...dataMonths)) - 1) : 0;
+            const xMax = pts.length ? Math.min(24, Math.ceil(Math.max(...dataMonths))  + 2) : 12;
+            const xSpan = Math.max(xMax - xMin, 3);
+
+            // Y range: use WHO lines within visible range + data points
+            const visIdx = (m) => Math.max(0, Math.min(who.P3.length - 1, Math.round(m)));
+            const visWhoVals = [];
+            for (let m = Math.floor(xMin); m <= Math.ceil(xMax); m++) {
+                const i = Math.min(m, who.P3.length - 1);
+                visWhoVals.push(who.P3[i], who.P97[i]);
+            }
+            const allVals = [...pts.map(p => p.v), ...visWhoVals];
             const minV = Math.min(...allVals) * 0.97, maxV = Math.max(...allVals) * 1.03;
 
-            const toX = m => pad.l + (m / maxM) * cW;
+            const toX = m => pad.l + ((m - xMin) / xSpan) * cW;
             const toY = v => pad.t + cH - ((v - minV) / (maxV - minV)) * cH;
 
-            // grid lines
+            // Horizontal grid + Y labels
             ctx.strokeStyle = '#eee'; ctx.lineWidth = 1;
             for (let i = 0; i <= 4; i++) {
                 const y = pad.t + (i / 4) * cH;
@@ -2886,7 +3087,17 @@
                 ctx.fillText(val, pad.l - 3, y + 3);
             }
 
-            // WHO percentile lines
+            // X-axis month labels (every 1 or 2 months depending on span)
+            const step = xSpan <= 6 ? 1 : xSpan <= 12 ? 2 : 3;
+            for (let m = Math.ceil(xMin); m <= Math.floor(xMax); m += step) {
+                const x = toX(m);
+                ctx.fillStyle = '#bbb'; ctx.font = '8.5px sans-serif'; ctx.textAlign = 'center';
+                ctx.fillText(`${m}m`, x, pad.t + cH + 12);
+                ctx.strokeStyle = '#f0f0f0'; ctx.lineWidth = 1;
+                ctx.beginPath(); ctx.moveTo(x, pad.t); ctx.lineTo(x, pad.t + cH); ctx.stroke();
+            }
+
+            // WHO percentile lines (only within visible x range)
             const whoLines = [
                 { key: 'P3',  dash: [3,3], alpha: 0.25, label: 'P3' },
                 { key: 'P15', dash: [4,3], alpha: 0.35, label: 'P15' },
@@ -2900,15 +3111,20 @@
                 ctx.lineWidth = key === 'P50' ? 1.8 : 1.2;
                 ctx.setLineDash(dash);
                 ctx.beginPath();
-                vals.forEach((v, i) => { i === 0 ? ctx.moveTo(toX(i), toY(v)) : ctx.lineTo(toX(i), toY(v)); });
+                let started = false;
+                vals.forEach((v, i) => {
+                    if (i < Math.floor(xMin) || i > Math.ceil(xMax)) return;
+                    if (!started) { ctx.moveTo(toX(i), toY(v)); started = true; }
+                    else ctx.lineTo(toX(i), toY(v));
+                });
                 ctx.stroke();
-                // right-side label
-                const lastV = vals[Math.min(Math.floor(maxM), vals.length - 1)];
+                // right-side label at xMax
+                const labelIdx = Math.min(Math.floor(xMax), vals.length - 1);
                 ctx.setLineDash([]);
                 ctx.fillStyle = `rgba(52,170,68,${Math.min(alpha + 0.2, 0.7)})`;
                 ctx.font = key === 'P50' ? 'bold 9px sans-serif' : '9px sans-serif';
                 ctx.textAlign = 'left';
-                ctx.fillText(label, toX(maxM) + 4, toY(lastV) + 3);
+                ctx.fillText(label, toX(xMax) + 3, toY(vals[labelIdx]) + 3);
             });
             ctx.setLineDash([]);
 
@@ -3070,6 +3286,7 @@
                 // 仅当前在成长页面时更新图表
                 if (activePage === 'page-growth') {
                     renderMilkChart();
+                    renderSleepChart();
                     renderGrowthChart();
                 }
             } catch (err) {
@@ -3302,14 +3519,20 @@
         async function submitSleep() {
             const date = document.getElementById('sleep-date').value;
             const startTime = document.getElementById('sleep-start').value;
-            const endTime = document.getElementById('sleep-end').value;
-            const overnight = document.getElementById('sleep-overnight')?.checked;
-            const endDate = overnight ? (document.getElementById('sleep-end-date')?.value || date) : date;
+            const endTime   = document.getElementById('sleep-end').value;
             const note = document.getElementById('sleep-note')?.value || '';
             const start = new Date(`${date}T${startTime}`);
-            const end = new Date(`${endDate}T${endTime}`);
-            let durationMin = Math.round((end - start) / 60000);
-            if (durationMin < 0) durationMin = 0;
+            let endDate = date;
+            let end = new Date(`${date}T${endTime}`);
+            if (end <= start) {
+                const d = new Date(date); d.setDate(d.getDate() + 1);
+                endDate = d.toISOString().split('T')[0];
+                end = new Date(`${endDate}T${endTime}`);
+            }
+            const overrideVal = parseInt(document.getElementById('sleep-duration-override')?.value);
+            let durationMin = isNaN(overrideVal) || overrideVal <= 0
+                ? Math.max(0, Math.round((end - start) / 60000))
+                : overrideVal;
             await submitRecord({ type: 'sleep', start_time: `${date} ${startTime}:00`, end_time: `${endDate} ${endTime}:00`, duration_min: durationMin, note }, '睡眠');
         }
         
@@ -3400,9 +3623,32 @@
             }
         }
 
+        async function compressImage(file, maxPx = 1080) {
+            return new Promise((resolve) => {
+                const img = new Image();
+                const url = URL.createObjectURL(file);
+                img.onload = () => {
+                    URL.revokeObjectURL(url);
+                    const scale = Math.min(1, maxPx / Math.max(img.width, img.height));
+                    const w = Math.round(img.width * scale);
+                    const h = Math.round(img.height * scale);
+                    const canvas = document.createElement('canvas');
+                    canvas.width = w; canvas.height = h;
+                    canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+                    canvas.toBlob(
+                        blob => resolve(new File([blob], file.name.replace(/\.[^.]+$/, '.jpg'), { type: 'image/jpeg' })),
+                        'image/jpeg', 0.85
+                    );
+                };
+                img.onerror = () => { URL.revokeObjectURL(url); resolve(file); };
+                img.src = url;
+            });
+        }
+
         async function uploadPhoto(file) {
+            const compressed = await compressImage(file);
             const formData = new FormData();
-            formData.append('photo', file);
+            formData.append('photo', compressed);
 
             const res = await fetch('/api/upload', {
                 method: 'POST',
@@ -3491,6 +3737,7 @@
         window.addEventListener('resize', () => {
             renderGrowthChart();
             renderMilkChart();
+            renderSleepChart();
         });
 
         // ========== 自定义下拉刷新 ==========
