@@ -537,6 +537,22 @@
         .toast.show {
             opacity: 1;
         }
+        .toast.loading {
+            background: rgba(0,122,255,0.92);
+            padding-left: 18px;
+        }
+        .toast.loading::before {
+            content: '';
+            display: inline-block;
+            width: 12px; height: 12px;
+            border: 2px solid rgba(255,255,255,0.4);
+            border-top-color: #fff;
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+            margin-right: 8px;
+            vertical-align: middle;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
         
         /* 模态框 */
         .modal {
@@ -1810,11 +1826,30 @@
             return str;
         }
         
-        function showToast(msg) {
+        let _toastTimer = null;
+        let isProcessing = false;
+
+        function showToast(msg, persistent = false) {
             const toast = document.getElementById('toast');
+            if (_toastTimer) { clearTimeout(_toastTimer); _toastTimer = null; }
+            toast.classList.remove('loading');
             toast.textContent = msg;
             toast.classList.add('show');
-            setTimeout(() => toast.classList.remove('show'), 2000);
+            if (!persistent) {
+                _toastTimer = setTimeout(() => { toast.classList.remove('show'); }, 2500);
+            }
+        }
+
+        function showLoadingToast(msg) {
+            const toast = document.getElementById('toast');
+            if (_toastTimer) { clearTimeout(_toastTimer); _toastTimer = null; }
+            toast.textContent = msg;
+            toast.classList.add('show', 'loading');
+        }
+
+        function hideLoadingToast() {
+            const toast = document.getElementById('toast');
+            toast.classList.remove('show', 'loading');
         }
         
         // (Dead setDatetimeInputDefaults and calcSleepDuration removed - forms are now dynamic modals)
@@ -2867,9 +2902,12 @@
 
         async function deleteCalendarRecord(idx, event) {
             if (event) event.stopPropagation();
+            if (isProcessing) return;
             const item = calendarDetailRecords[idx];
             if (!item) return;
             if (!confirm('确认删除此记录？')) return;
+            isProcessing = true;
+            showLoadingToast('删除中...');
             const { recordType, originalIdx } = item;
             try {
                 const res = await fetch('/api/delete', {
@@ -2878,12 +2916,15 @@
                     body: JSON.stringify({ type: recordType, row_idx: originalIdx + 2 })
                 });
                 if (!res.ok) throw new Error('删除失败');
+                hideLoadingToast();
                 showToast('已删除');
                 await fetchData();
-                // 删除后重新显示该日详情（数据已刷新）
                 showDateDetails(calendarDetailDateStr);
             } catch (err) {
+                hideLoadingToast();
                 showToast('删除失败: ' + err.message);
+            } finally {
+                isProcessing = false;
             }
         }
         
@@ -3282,9 +3323,12 @@
         }
 
         async function deleteGrowthRecord(metricKey, i) {
+            if (isProcessing) return;
             const item = (growthRecordsByKey[metricKey] || [])[i];
             if (!item) return;
             if (!confirm('确认删除此成长记录？')) return;
+            isProcessing = true;
+            showLoadingToast('删除中...');
             const { originalIdx } = item;
             try {
                 const res = await fetch('/api/delete', {
@@ -3293,14 +3337,17 @@
                     body: JSON.stringify({ type: 'growth', row_idx: originalIdx + 2 })
                 });
                 if (!res.ok) throw new Error('删除失败');
+                hideLoadingToast();
                 showToast('已删除');
                 await fetchData();
                 renderGrowthChart();
-                // 刷新弹窗内容
                 const meta = growthModalMeta;
                 if (meta) _renderGrowthRecordsContent(meta.metricKey, meta.unit, meta.color);
             } catch (err) {
+                hideLoadingToast();
                 showToast('删除失败: ' + err.message);
+            } finally {
+                isProcessing = false;
             }
         }
 
@@ -3518,12 +3565,15 @@
         }
 
         async function deleteViewedPhoto() {
+            if (isProcessing) return;
             if (!viewerPhotoRecord) return;
             if (!confirm('确定要删除这张照片？')) return;
+            isProcessing = true;
+            closeImageViewer();
+            showLoadingToast('删除中...');
             const idx = viewerPhotoRecord._originalIdx;
             const row_idx = idx + 2;
             const drive_file_id = getDriveFileId(viewerPhotoRecord.drive_url);
-            closeImageViewer();
             try {
                 const res = await fetch('/api/delete', {
                     method: 'POST',
@@ -3531,10 +3581,14 @@
                     body: JSON.stringify({ type: 'photo', row_idx, drive_file_id })
                 });
                 if (!res.ok) throw new Error('删除失败');
+                hideLoadingToast();
                 showToast('照片已删除');
                 await fetchData();
             } catch (err) {
+                hideLoadingToast();
                 showToast('删除失败: ' + err.message);
+            } finally {
+                isProcessing = false;
             }
         }
         
@@ -3565,13 +3619,15 @@
         // ========== 记录编辑/删除 ==========
         async function deleteTimelineRecord(idx, event) {
             if (event) event.stopPropagation();
+            if (isProcessing) return;
             if (!confirm('确定要删除这条记录吗？')) return;
 
             const item = todayTimelineRecords[idx];
             if (!item) { showToast('记录不存在'); return; }
 
+            isProcessing = true;
+            showLoadingToast('删除中...');
             const { recordType, originalIdx } = item;
-            // Google Sheets: 第1行是表头，数据从第2行开始
             const row_idx = originalIdx + 2;
 
             try {
@@ -3582,11 +3638,15 @@
                 });
                 const json = await res.json();
                 if (!res.ok) throw new Error(json.error || '删除失败');
+                hideLoadingToast();
                 showToast('删除成功');
                 await fetchData();
             } catch (err) {
+                hideLoadingToast();
                 console.error('删除错误:', err);
                 showToast('删除失败: ' + err.message);
+            } finally {
+                isProcessing = false;
             }
         }
 
@@ -3807,23 +3867,32 @@
         }
         
         async function submitRecord(data, typeName) {
-            try {
-                const isEdit = !!pendingEdit;
+            if (isProcessing) return;
+            const isEdit = !!pendingEdit;
 
-                // 修改模式：弹出确认对话框
-                if (isEdit) {
-                    if (!confirm(`确认修改此${typeName}记录？`)) return;
-                    // 删除旧记录
+            // 修改模式：弹出确认对话框（弹出前未锁定，用户可选择取消）
+            if (isEdit) {
+                if (!confirm(`确认修改此${typeName}记录？`)) return;
+            }
+
+            // 立即关闭输入框，锁定操作，显示加载状态
+            isProcessing = true;
+            const editSnap = pendingEdit ? { ...pendingEdit } : null;
+            closeInputModal();
+            showLoadingToast(isEdit ? '修改中...' : '保存中...');
+
+            try {
+                // 修改模式：先删除旧记录
+                if (editSnap) {
                     try {
                         await fetch('/api/delete', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ type: pendingEdit.recordType, row_idx: pendingEdit.row_idx })
+                            body: JSON.stringify({ type: editSnap.recordType, row_idx: editSnap.row_idx })
                         });
                     } catch (e) {
                         console.warn('删除旧记录失败:', e);
                     }
-                    pendingEdit = null;
                 }
 
                 const res = await fetch('/api/add', {
@@ -3837,23 +3906,20 @@
                     throw new Error(errData.error || `HTTP ${res.status}`);
                 }
 
+                hideLoadingToast();
                 showToast(`${typeName}记录已${isEdit ? '修改' : '保存'}`);
-                closeInputModal();
 
-                // 保存滚动位置，刷新后恢复
                 const savedScroll = window.scrollY;
-                try {
-                    await fetchData();
-                } catch (refreshErr) {
-                    console.error('刷新数据错误:', refreshErr);
-                }
+                try { await fetchData(); } catch (e) { console.error('刷新数据错误:', e); }
                 window.scrollTo({ top: savedScroll, behavior: 'instant' });
 
-                // 若有后续回调（如重新显示日历详情），执行它
                 if (postSaveCallback) { const cb = postSaveCallback; postSaveCallback = null; cb(); }
             } catch (err) {
+                hideLoadingToast();
                 console.error('保存错误:', err);
                 showToast('保存失败: ' + err.message);
+            } finally {
+                isProcessing = false;
             }
         }
         
