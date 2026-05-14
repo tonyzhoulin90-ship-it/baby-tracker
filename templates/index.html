@@ -979,9 +979,9 @@
         .calendar-day.has-photo .cal-day-num {
             position: relative;
             z-index: 1;
-            color: #fff;
-            text-shadow: 0 1px 4px rgba(0,0,0,0.75);
-            font-weight: 700;
+            color: rgba(255,255,255,0.82);
+            text-shadow: 0 1px 3px rgba(0,0,0,0.55);
+            font-weight: 600;
         }
         .calendar-day.today.has-photo {
             border-color: rgba(255,255,255,0.95);
@@ -2061,7 +2061,8 @@
                 if (timelineFilter === 'all')   return true;
                 if (timelineFilter === 'milk')  return recordType === 'milk';
                 if (timelineFilter === 'sleep') return recordType === 'sleep';
-                if (timelineFilter === 'other') return !['milk','sleep'].includes(recordType);
+                if (timelineFilter === 'food')  return recordType === 'food';
+                if (timelineFilter === 'other') return !['milk','sleep','food'].includes(recordType);
                 return true;
             };
             const visibleRecords = todayTimelineRecords.filter(item => filterFn(item.recordType));
@@ -2071,7 +2072,7 @@
                 <div style="display:flex;gap:8px;margin-bottom:15px;padding-bottom:15px;border-bottom:1px solid var(--border);flex-wrap:wrap;">
                     <div style="flex:1;min-width:60px;text-align:center;padding:10px 6px;background:#FFF3E0;border-radius:8px;cursor:pointer;" onclick="quickAdd('milk')">
                         <div style="font-size:1.4rem;margin-bottom:4px;">🍼</div>
-                        <div style="font-size:0.78rem;color:#666;">嗂奶</div>
+                        <div style="font-size:0.78rem;color:#666;">喂奶</div>
                     </div>
                     <div style="flex:1;min-width:60px;text-align:center;padding:10px 6px;background:#E3F2FD;border-radius:8px;cursor:pointer;" onclick="quickAdd('sleep')">
                         <div style="font-size:1.4rem;margin-bottom:4px;">😴</div>
@@ -2093,6 +2094,7 @@
                 { key: 'all',   label: '全部' },
                 { key: 'milk',  label: '喂奶' },
                 { key: 'sleep', label: '睡眠' },
+                { key: 'food',  label: '辅食' },
                 { key: 'other', label: '其他' },
             ];
             html += `<div style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap;">`;
