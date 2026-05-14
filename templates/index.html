@@ -2928,8 +2928,13 @@
                 if (!res.ok) throw new Error('删除失败');
                 hideLoadingToast();
                 showToast('已删除');
-                await fetchData();
-                showDateDetails(calendarDetailDateStr);
+                // 乐观移除
+                if (currentData[recordType]) {
+                    currentData[recordType].splice(originalIdx, 1);
+                    try { localStorage.setItem(LS_KEY, JSON.stringify(currentData)); } catch(e) {}
+                }
+                fetchData().then(() => showDateDetails(calendarDetailDateStr))
+                           .catch(e => { console.error('后台刷新失败:', e); showDateDetails(calendarDetailDateStr); });
             } catch (err) {
                 hideLoadingToast();
                 showToast('删除失败: ' + err.message);
@@ -3456,31 +3461,32 @@
         function renderWhoChart() { /* replaced by renderGrowthChart with embedded WHO */ }
         
         // ========== 数据操作 ==========
+        const LS_KEY = 'mengxia_data_v1';
+
+        function _renderActivePage() {
+            const activePage = document.querySelector('.page.active')?.id || '';
+            updateTodayStats();
+            renderTodayTimeline();
+            renderTodayPhotos();
+            if (activePage === 'page-calendar') {
+                renderCalendar();
+                renderMilestoneTimeline();
+            }
+            if (activePage === 'page-growth') {
+                renderMilkChart();
+                renderSleepChart();
+                renderGrowthChart();
+            }
+        }
+
         async function fetchData() {
             try {
                 const res = await fetch('/api/data');
                 if (!res.ok) throw new Error('获取数据失败');
                 currentData = await res.json();
-
-                const activePage = document.querySelector('.page.active')?.id || '';
-                
-                // 更新今日页面
-                updateTodayStats();
-                renderTodayTimeline();
-                renderTodayPhotos();
-                
-                // 仅当前在日历页面时更新
-                if (activePage === 'page-calendar') {
-                    renderCalendar();
-                    renderMilestoneTimeline();
-                }
-                
-                // 仅当前在成长页面时更新图表
-                if (activePage === 'page-growth') {
-                    renderMilkChart();
-                    renderSleepChart();
-                    renderGrowthChart();
-                }
+                // 存入 localStorage 供下次即时显示
+                try { localStorage.setItem(LS_KEY, JSON.stringify(currentData)); } catch(e) {}
+                _renderActivePage();
             } catch (err) {
                 console.error('获取数据错误:', err);
                 showToast('获取数据失败');
@@ -3650,7 +3656,13 @@
                 if (!res.ok) throw new Error(json.error || '删除失败');
                 hideLoadingToast();
                 showToast('删除成功');
-                await fetchData();
+                // 乐观移除：立即从本地数据移除并重新渲染
+                if (currentData[recordType]) {
+                    currentData[recordType].splice(originalIdx, 1);
+                    try { localStorage.setItem(LS_KEY, JSON.stringify(currentData)); } catch(e) {}
+                    _renderActivePage();
+                }
+                fetchData().catch(e => console.error('后台刷新失败:', e));
             } catch (err) {
                 hideLoadingToast();
                 console.error('删除错误:', err);
@@ -3919,8 +3931,24 @@
                 hideLoadingToast();
                 showToast(`${typeName}记录已${isEdit ? '修改' : '保存'}`);
 
+                // 乐观更新：立即把新记录加入本地数据并渲染，不等后台刷新
+                const typeKey = data.type;
+                if (typeKey && currentData[typeKey] !== undefined) {
+                    if (editSnap) {
+                        // 编辑模式：移除旧记录（row_idx - 2 = 0-based index）
+                        const oldIdx = editSnap.row_idx - 2;
+                        if (oldIdx >= 0 && oldIdx < currentData[typeKey].length) {
+                            currentData[typeKey].splice(oldIdx, 1);
+                        }
+                    }
+                    currentData[typeKey].push(data);
+                    try { localStorage.setItem(LS_KEY, JSON.stringify(currentData)); } catch(e) {}
+                    _renderActivePage();
+                }
+
+                // 后台静默同步（修正服务器真实状态）
                 const savedScroll = window.scrollY;
-                try { await fetchData(); } catch (e) { console.error('刷新数据错误:', e); }
+                fetchData().catch(e => console.error('后台刷新失败:', e));
                 window.scrollTo({ top: savedScroll, behavior: 'instant' });
 
                 if (postSaveCallback) { const cb = postSaveCallback; postSaveCallback = null; cb(); }
@@ -3948,8 +3976,17 @@
             
             // 默认显示今日页面
             switchPage('today');
-            
-            // 获取数据
+
+            // 即时从 localStorage 恢复上次数据并渲染（后台再请求最新数据）
+            try {
+                const cached = localStorage.getItem(LS_KEY);
+                if (cached) {
+                    currentData = JSON.parse(cached);
+                    _renderActivePage();
+                }
+            } catch(e) {}
+
+            // 后台拉取最新数据
             fetchData();
         });
         

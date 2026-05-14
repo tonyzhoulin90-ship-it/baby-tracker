@@ -152,7 +152,35 @@ def ensure_worksheet(sh, name, headers):
 # 全局缓存
 _spreadsheet_cache = None
 _cache_timestamp = 0
-CACHE_TTL = 300  # 5分钟缓存
+CACHE_TTL = 300  # 5分钟缓存（电子表格连接对象）
+
+# 每个 Sheet 的数据缓存（内存，60秒 TTL）
+_sheet_data_cache = {}   # { 'sheet_name': {'data': [...], 'ts': float} }
+SHEET_DATA_TTL = 60      # 秒
+
+
+def _get_sheet_records(sh, sheet_name):
+    """获取 sheet 数据，优先返回内存缓存（60s TTL）"""
+    global _sheet_data_cache
+    now = time.time()
+    entry = _sheet_data_cache.get(sheet_name)
+    if entry and (now - entry['ts']) < SHEET_DATA_TTL:
+        return entry['data']
+    # 缓存未命中，从 Google 读取
+    ws_name = 'Sheet1' if sheet_name == 'growth' else sheet_name
+    try:
+        ws = sh.worksheet(ws_name)
+        records = ws.get_all_records()
+    except Exception as e:
+        print(f'读取 {sheet_name} 失败: {e}')
+        records = []
+    _sheet_data_cache[sheet_name] = {'data': records, 'ts': now}
+    return records
+
+
+def _invalidate_sheet_cache(sheet_name):
+    """清除指定 sheet 的数据缓存"""
+    _sheet_data_cache.pop(sheet_name, None)
 
 def init_spreadsheet():
     """初始化电子表格结构（带缓存）"""
@@ -351,31 +379,14 @@ def index():
 @app.route('/api/data')
 @requires_auth
 def get_data():
-    """获取所有数据"""
+    """获取所有数据（各 sheet 独立 60s 缓存）"""
     sh = init_spreadsheet()
     if not sh:
         return jsonify({'error': '无法连接到表格'}), 500
     
     result = {}
-    
-    # 获取成长数据（Sheet1）
-    try:
-        ws = sh.worksheet('Sheet1')
-        records = ws.get_all_records()
-        result['growth'] = records
-    except Exception as e:
-        result['growth'] = []
-        print(f'获取成长数据错误: {e}')
-    
-    # 获取其他类型数据
-    for name in ['milk', 'food', 'poop', 'sleep', 'photo', 'milestone', 'other']:
-        try:
-            ws = sh.worksheet(name)
-            records = ws.get_all_records()
-            result[name] = records
-        except Exception as e:
-            result[name] = []
-            print(f'获取 {name} 数据错误: {e}')
+    for name in ['growth', 'milk', 'food', 'poop', 'sleep', 'photo', 'milestone', 'other']:
+        result[name] = _get_sheet_records(sh, name)
     
     # 添加 WHO 参考数据（仅用于当前月龄）
     age_months = calculate_age_months()
@@ -473,6 +484,7 @@ def add_record():
         
         if row:
             ws.append_row(row)
+            _invalidate_sheet_cache(record_type)  # 清除该 sheet 的缓存
             return jsonify({'success': True})
         
         return jsonify({'error': '无法构建记录'}), 400
@@ -538,6 +550,7 @@ def delete_record():
             ws = sh.worksheet(record_type)
         
         ws.delete_rows(row_idx)
+        _invalidate_sheet_cache(record_type)  # 清除该 sheet 的缓存
 
         # 如果提供了 Drive 文件 ID，同时删除 Drive 上的文件
         drive_file_id = data.get('drive_file_id', '')
