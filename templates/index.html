@@ -1434,7 +1434,6 @@
                 <div class="overview-item">
                     <div class="overview-value" id="today-sleep">0</div>
                     <div class="overview-label">睡眠 小时</div>
-                    <div style="font-size:0.62rem;color:#bbb;margin-top:2px;line-height:1.2;">不含夜晚睡眠</div>
                 </div>
                 <div class="overview-item">
                     <div class="overview-value" id="today-diaper">0</div>
@@ -1953,7 +1952,8 @@
             }
             
             // 计算今日睡眠 (含夜晚睡眠跨日记录)
-            let sleepTotal = 0;
+            let sleepTotal = 0;    // 全部睡眠
+            let sleepDaytime = 0;  // 不含夜晚睡眠
             if (currentData.sleep) {
                 currentData.sleep.forEach(r => {
                     if (r.note === '夜睡') return; // 入睡标记，不计入统计
@@ -1962,7 +1962,10 @@
                         // 跨夜睡眠：只归入起床当天（end_time）
                         if (r.end_time?.startsWith(todayStr)) sleepTotal += dur;
                     } else {
-                        if (r.start_time?.startsWith(todayStr)) sleepTotal += dur;
+                        if (r.start_time?.startsWith(todayStr)) {
+                            sleepTotal += dur;
+                            sleepDaytime += dur;
+                        }
                     }
                 });
             }
@@ -1983,7 +1986,13 @@
             const poopEl = document.getElementById('today-diaper');
             
             if (milkEl) milkEl.textContent = milkTotal;
-            if (sleepEl) sleepEl.textContent = (sleepTotal / 60).toFixed(1);
+            if (sleepEl) {
+                const totalStr = (sleepTotal / 60).toFixed(1);
+                const dayStr   = (sleepDaytime / 60).toFixed(1);
+                sleepEl.innerHTML = sleepTotal !== sleepDaytime
+                    ? `${totalStr}<span style="font-size:0.48em;font-weight:600;letter-spacing:0;"> (${dayStr})</span>`
+                    : totalStr;
+            }
             if (poopEl) poopEl.textContent = poopCount;
         }
         
