@@ -963,14 +963,29 @@
             color: white;
         }
         
-        .calendar-day.has-photo::after {
+        .calendar-day.has-photo {
+            background-size: cover;
+            background-position: center;
+            overflow: hidden;
+        }
+        .calendar-day.has-photo::before {
             content: '';
             position: absolute;
-            bottom: 4px;
-            width: 4px;
-            height: 4px;
+            inset: 0;
             border-radius: 50%;
-            background: var(--primary);
+            background: linear-gradient(160deg, rgba(0,0,0,0.10) 0%, rgba(0,0,0,0.42) 100%);
+            z-index: 0;
+        }
+        .calendar-day.has-photo .cal-day-num {
+            position: relative;
+            z-index: 1;
+            color: #fff;
+            text-shadow: 0 1px 4px rgba(0,0,0,0.75);
+            font-weight: 700;
+        }
+        .calendar-day.today.has-photo {
+            border-color: rgba(255,255,255,0.95);
+            color: #fff;
         }
         
         .calendar-day.other-month {
@@ -2788,16 +2803,34 @@
                 html += `<div class="calendar-day other-month">${daysInPrevMonth - i}</div>`;
             }
             
+            // 当月每天第一张照片 URL 映射
+            const photoByDate = {};
+            (currentData.photo || []).forEach(p => {
+                const d = (p.timestamp || '').substring(0, 10);
+                if (d && !photoByDate[d] && p.drive_url) photoByDate[d] = p.drive_url;
+            });
+
             // 当月日期
             const todayD = new Date();
             for (let i = 1; i <= daysInMonth; i++) {
                 const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(i).padStart(2,'0')}`;
-                const hasPhoto = currentData.photo?.some(p => p.timestamp?.startsWith(dateStr));
+                const photoUrl = photoByDate[dateStr];
                 const isToday = i === todayD.getDate() && month === todayD.getMonth() && year === todayD.getFullYear();
                 let cls = 'calendar-day';
                 if (isToday) cls += ' today';
-                if (hasPhoto) cls += ' has-photo';
-                html += `<div class="${cls}" onclick="showDateDetails('${dateStr}')">${i}</div>`;
+                let bgStyle = '';
+                let numHtml = String(i);
+                if (photoUrl) {
+                    cls += ' has-photo';
+                    const fileId = getDriveFileId(photoUrl);
+                    if (fileId) {
+                        const thumb = `https://drive.google.com/thumbnail?id=${fileId}&sz=w200`;
+                        bgStyle = ` style="background-image:url('${thumb}')"`;
+
+                        numHtml = `<span class="cal-day-num">${i}</span>`;
+                    }
+                }
+                html += `<div class="${cls}"${bgStyle} onclick="showDateDetails('${dateStr}')">${numHtml}</div>`;
             }
             
             // 下月日期
