@@ -1998,6 +1998,7 @@
         
         // 全局今日时间轴记录，保留原始索引用于删除/编辑
         let todayTimelineRecords = [];
+        let timelineFilter = 'all'; // 'all' | 'milk' | 'sleep' | 'other'
         let pendingPrefill = null;
         let pendingEdit = null; // { recordType, row_idx } 等待替换的旧记录
         let postSaveCallback = null;  // 保存后回调（如重新打开日历详情）
@@ -2040,6 +2041,16 @@
                 return timeB.localeCompare(timeA);
             });
             
+            // 根据 filter 决定哪些记录显示
+            const filterFn = (recordType) => {
+                if (timelineFilter === 'all')   return true;
+                if (timelineFilter === 'milk')  return recordType === 'milk';
+                if (timelineFilter === 'sleep') return recordType === 'sleep';
+                if (timelineFilter === 'other') return !['milk','sleep'].includes(recordType);
+                return true;
+            };
+            const visibleRecords = todayTimelineRecords.filter(item => filterFn(item.recordType));
+
             // 快速添加按钮（始终显示在顶部）
             let html = `
                 <div style="display:flex;gap:8px;margin-bottom:15px;padding-bottom:15px;border-bottom:1px solid var(--border);flex-wrap:wrap;">
@@ -2062,13 +2073,35 @@
                 </div>
             `;
 
-            if (todayTimelineRecords.length === 0) {
-                html += `<div style="text-align:center;padding:20px;color:#999;">今天还没有记录</div>`;
+            // 过滤标签栏
+            const filters = [
+                { key: 'all',   label: '全部' },
+                { key: 'milk',  label: '喂奶' },
+                { key: 'sleep', label: '睡眠' },
+                { key: 'other', label: '其他' },
+            ];
+            html += `<div style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap;">`;
+            filters.forEach(f => {
+                const active = timelineFilter === f.key;
+                html += `<span onclick="setTimelineFilter('${f.key}')" style="
+                    padding:5px 14px;border-radius:20px;font-size:0.82rem;cursor:pointer;
+                    background:${active ? 'var(--primary)' : 'var(--border)'};
+                    color:${active ? '#fff' : 'var(--text-light)'};
+                    font-weight:${active ? '600' : '400'};
+                    transition:background 0.15s;
+                ">${f.label}</span>`;
+            });
+            html += `</div>`;
+
+            if (visibleRecords.length === 0) {
+                html += `<div style="text-align:center;padding:20px;color:#999;">暂无${timelineFilter === 'all' ? '' : filters.find(f=>f.key===timelineFilter)?.label}记录</div>`;
                 container.innerHTML = html;
                 return;
             }
 
-            todayTimelineRecords.forEach((item, i) => {
+            visibleRecords.forEach((item, i) => {
+                // i in visibleRecords maps back to the global index for edit/delete
+                const globalIdx = todayTimelineRecords.indexOf(item);
                 const { recordType, record } = item;
                 const config = typeConfig[recordType];
                 let icon = config.icon, itemName = config.name;
@@ -2117,8 +2150,8 @@
                             ${noteHtml}
                         </div>
                         <div style="display:flex;gap:4px;flex-shrink:0;">
-                            <div class="timeline-delete" style="color:#007AFF;" onclick="editTimelineRecord(${i}, event)">编辑</div>
-                            <div class="timeline-delete" onclick="deleteTimelineRecord(${i}, event)">删除</div>
+                            <div class="timeline-delete" style="color:#007AFF;" onclick="editTimelineRecord(${globalIdx}, event)">编辑</div>
+                            <div class="timeline-delete" onclick="deleteTimelineRecord(${globalIdx}, event)">删除</div>
                         </div>
                     </div>
                 `;
@@ -2126,7 +2159,12 @@
             
             container.innerHTML = html;
         }
-        
+
+        function setTimelineFilter(f) {
+            timelineFilter = f;
+            renderTodayTimeline();
+        }
+
         function quickAdd(type) {
             showInputForm(type);
         }
