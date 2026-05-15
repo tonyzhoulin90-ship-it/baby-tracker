@@ -992,6 +992,22 @@
             color: var(--text-light);
             opacity: 0.5;
         }
+
+        .cal-tab {
+            padding: 5px 11px;
+            border-radius: 16px;
+            font-size: 0.78rem;
+            cursor: pointer;
+            color: var(--text-light);
+            background: var(--border);
+            transition: background 0.15s, color 0.15s;
+            white-space: nowrap;
+        }
+        .cal-tab.active {
+            background: var(--primary);
+            color: #fff;
+            font-weight: 600;
+        }
         
         /* ========== iOS风格输入项 ========== */
         .input-list {
@@ -1596,32 +1612,43 @@
     <div class="page" id="page-calendar">
         <div class="today-header">
             <div class="today-title">日历</div>
+            <div style="display:flex;gap:4px;">
+                <div class="cal-tab active" data-mode="calendar" onclick="switchCalendarView('calendar')">📅 月历</div>
+                <div class="cal-tab" data-mode="photowall" onclick="switchCalendarView('photowall')">📸 照片墙</div>
+            </div>
         </div>
-        
-        <div class="calendar-page">
-            <!-- 月历 -->
-            <div class="calendar-sheet" style="margin: 15px; box-shadow: var(--shadow);">
-                <div class="calendar-header">
-                    <div class="calendar-month-year" id="calendar-month-year">2026年1月</div>
-                    <div class="calendar-nav">
-                        <div class="calendar-nav-btn" onclick="changeCalendarMonth(-1)">‹</div>
-                        <div class="calendar-nav-btn" onclick="changeCalendarMonth(1)">›</div>
+
+        <div id="calendar-main-view">
+            <div class="calendar-page">
+                <!-- 月历 -->
+                <div class="calendar-sheet" style="margin: 15px; box-shadow: var(--shadow);">
+                    <div class="calendar-header">
+                        <div class="calendar-month-year" id="calendar-month-year">2026年1月</div>
+                        <div class="calendar-nav">
+                            <div class="calendar-nav-btn" onclick="changeCalendarMonth(-1)">‹</div>
+                            <div class="calendar-nav-btn" onclick="changeCalendarMonth(1)">›</div>
+                        </div>
+                    </div>
+                    <div class="calendar-grid" id="calendar-grid">
+                        <!-- JS生成 -->
                     </div>
                 </div>
-                <div class="calendar-grid" id="calendar-grid">
-                    <!-- JS生成 -->
+
+                <!-- 里程碑时间轴 -->
+                <div class="timeline-section" style="margin: 15px;">
+                    <div class="photo-section-header">
+                        <div class="photo-section-title">🎯 里程碑</div>
+                    </div>
+                    <div class="milestone-timeline" id="milestone-timeline">
+                        <!-- JS生成 -->
+                    </div>
                 </div>
             </div>
-            
-            <!-- 里程碑时间轴 -->
-            <div class="timeline-section" style="margin: 15px;">
-                <div class="photo-section-header">
-                    <div class="photo-section-title">🎯 里程碑</div>
-                </div>
-                <div class="milestone-timeline" id="milestone-timeline">
-                    <!-- JS生成 -->
-                </div>
-            </div>
+        </div>
+
+        <!-- 照片墙 -->
+        <div id="calendar-photo-wall" style="display:none;padding:15px;">
+            <!-- JS生成 -->
         </div>
     </div>
     
@@ -2854,12 +2881,13 @@
             if (!container || !currentData.milestone) return;
 
             let html = '';
-            [...currentData.milestone].sort((a, b) => (b.date || '').localeCompare(a.date || '')).forEach(m => {
+            (currentData.milestone || []).map((m, idx) => ({...m, _originalIdx: idx}))
+                .sort((a, b) => (b.date || '').localeCompare(a.date || '')).forEach(m => {
                 const cap = [m.category, m.description].filter(Boolean).join('：').replace(/'/g, "&apos;");
                 const thumbHtml = m.drive_url ? `
                     <img src="${getDriveThumbnailUrl(m.drive_url)}"
                          loading="lazy"
-                         onclick="viewMilestonePhoto('${m.drive_url.replace(/'/g,"&apos;")}','${cap}');event.stopPropagation()"
+                         onclick="viewMilestonePhoto('${m.drive_url.replace(/'/g,"&apos;")}','${cap}',${m._originalIdx});event.stopPropagation()"
                          style="width:100%;max-width:280px;height:auto;border-radius:10px;margin-top:8px;display:block;cursor:pointer;"
                          onerror="this.style.display='none'">
                 ` : '';
@@ -2961,7 +2989,7 @@
                         photoHtml = `<img src="${getDriveThumbnailUrl(record.drive_url)}" style="width:72px;height:72px;object-fit:cover;border-radius:10px;margin-top:6px;flex-shrink:0;" onclick="event.stopPropagation();viewPhoto(${item.originalIdx})" onerror="this.style.display='none'">`;
                     } else if (recordType === 'milestone' && record.drive_url) {
                         const mc = [record.category, record.description].filter(Boolean).join('：').replace(/'/g, "&apos;");
-                        photoHtml = `<img src="${getDriveThumbnailUrl(record.drive_url)}" style="width:72px;height:72px;object-fit:cover;border-radius:10px;margin-top:6px;flex-shrink:0;" onclick="event.stopPropagation();viewMilestonePhoto('${record.drive_url.replace(/'/g,"&apos;")}','${mc}')" onerror="this.style.display='none'">`;
+                        photoHtml = `<img src="${getDriveThumbnailUrl(record.drive_url)}" style="width:72px;height:72px;object-fit:cover;border-radius:10px;margin-top:6px;flex-shrink:0;" onclick="event.stopPropagation();viewMilestonePhoto('${record.drive_url.replace(/'/g,"&apos;")}','${mc}',${item.originalIdx})" onerror="this.style.display='none'">`;
                     }
 
                     html += `
@@ -3557,14 +3585,88 @@
         // ========== 数据操作 ==========
         const LS_KEY = 'mengxia_data_v1';
 
+        let calendarViewMode = 'calendar';
+
+        function switchCalendarView(mode) {
+            calendarViewMode = mode;
+            const mainView = document.getElementById('calendar-main-view');
+            const wallView = document.getElementById('calendar-photo-wall');
+            if (mainView) mainView.style.display = mode === 'calendar' ? '' : 'none';
+            if (wallView) wallView.style.display = mode === 'photowall' ? '' : 'none';
+            document.querySelectorAll('.cal-tab').forEach(t =>
+                t.classList.toggle('active', t.dataset.mode === mode));
+            if (mode === 'photowall') renderCalendarPhotoWall();
+            else { renderCalendar(); renderMilestoneTimeline(); }
+        }
+
+        function renderCalendarPhotoWall() {
+            const container = document.getElementById('calendar-photo-wall');
+            if (!container) return;
+            const year = currentCalendarDate.getFullYear();
+            const month = currentCalendarDate.getMonth();
+            const monthStr = `${year}-${String(month+1).padStart(2,'0')}`;
+
+            const regularPhotos = (currentData.photo || [])
+                .map((p, idx) => ({
+                    date: (p.timestamp || '').substring(0, 10),
+                    drive_url: p.drive_url, caption: p.caption || '',
+                    _src: 'photo', _originalIdx: idx
+                }))
+                .filter(p => p.date.startsWith(monthStr) && p.drive_url);
+
+            const milestonePhotos = (currentData.milestone || [])
+                .map((m, idx) => ({
+                    date: m.date || '',
+                    drive_url: m.drive_url,
+                    caption: [m.category, m.description].filter(Boolean).join('：'),
+                    _src: 'milestone', _originalIdx: idx
+                }))
+                .filter(p => p.date.startsWith(monthStr) && p.drive_url);
+
+            const combined = [...regularPhotos, ...milestonePhotos]
+                .sort((a, b) => b.date.localeCompare(a.date));
+
+            if (combined.length === 0) {
+                container.innerHTML = `<div style="text-align:center;padding:40px 0;color:#999;font-size:0.9rem;">本月暂无照片</div>`;
+                return;
+            }
+
+            const byDate = {};
+            combined.forEach(p => { if (!byDate[p.date]) byDate[p.date] = []; byDate[p.date].push(p); });
+
+            let html = '';
+            Object.keys(byDate).sort((a, b) => b.localeCompare(a)).forEach(date => {
+                const pts = date.split('-');
+                const label = `${parseInt(pts[1])}月${parseInt(pts[2])}日`;
+                html += `<div style="margin-bottom:20px;">
+                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+                        <span style="font-size:0.85rem;font-weight:600;color:var(--text);">${label}</span>
+                        <span onclick="showDateDetails('${date}')" style="font-size:0.78rem;color:var(--primary);cursor:pointer;">查看当天 ›</span>
+                    </div>
+                    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:4px;">`;
+                byDate[date].forEach(photo => {
+                    const thumb = getDriveThumbnailUrl(photo.drive_url);
+                    const cap = (photo.caption || '').replace(/'/g, "&apos;");
+                    const clickFn = photo._src === 'photo'
+                        ? `viewPhoto(${photo._originalIdx})`
+                        : `viewMilestonePhoto('${photo.drive_url.replace(/'/g,"&apos;")}','${cap}',${photo._originalIdx})`;
+                    html += `<div onclick="${clickFn}" style="aspect-ratio:1;overflow:hidden;border-radius:6px;cursor:pointer;background:#f0f0f0;">
+                        <img src="${thumb}" loading="lazy" style="width:100%;height:100%;object-fit:cover;" onerror="this.parentElement.style.display='none'">
+                    </div>`;
+                });
+                html += `</div></div>`;
+            });
+            container.innerHTML = html;
+        }
+
         function _renderActivePage() {
             const activePage = document.querySelector('.page.active')?.id || '';
             updateTodayStats();
             renderTodayTimeline();
             renderTodayPhotos();
             if (activePage === 'page-calendar') {
-                renderCalendar();
-                renderMilestoneTimeline();
+                if (calendarViewMode === 'photowall') renderCalendarPhotoWall();
+                else { renderCalendar(); renderMilestoneTimeline(); }
             }
             if (activePage === 'page-growth') {
                 renderMilkChart();
@@ -3623,11 +3725,13 @@
 
             // 里程碑照片（有 drive_url 的）
             const msPhotos = (currentData.milestone || [])
+                .map((m, idx) => ({...m, _milestoneIdx: idx}))
                 .filter(m => m.date === dateStr && m.drive_url)
                 .map(m => ({
                     drive_url: m.drive_url,
                     caption: [m.category, m.description].filter(Boolean).join('：'),
-                    _src: 'milestone'
+                    _src: 'milestone',
+                    _originalIdx: m._milestoneIdx
                 }));
 
             const combined = [...dayPhotos, ...msPhotos];
@@ -3647,7 +3751,7 @@
                 const cap = (photo.caption || '').replace(/'/g, "&apos;");
                 const clickFn = photo._src === 'photo'
                     ? `viewPhoto(${photo._originalIdx})`
-                    : `viewMilestonePhoto('${photo.drive_url.replace(/'/g,"&apos;")}','${cap}')`;
+                    : `viewMilestonePhoto('${photo.drive_url.replace(/'/g,"&apos;")}','${cap}',${photo._originalIdx})`;
                 html += `
                     <div class="photo-item" onclick="${clickFn}" style="position:relative;overflow:hidden;border-radius:12px;">
                         <img src="${thumb}" alt="${cap}" loading="lazy" style="width:100%;height:100%;object-fit:cover;" onerror="this.src='${photo.drive_url}'">
@@ -3657,8 +3761,11 @@
             container.innerHTML = html;
         }
 
-        function viewMilestonePhoto(url, caption) {
-            viewerPhotoRecord = null;
+        function viewMilestonePhoto(url, caption, milestoneIdx) {
+            const idx = (milestoneIdx !== undefined && milestoneIdx >= 0) ? milestoneIdx : -1;
+            viewerPhotoRecord = idx >= 0
+                ? { drive_url: url, _type: 'milestone', _originalIdx: idx }
+                : null;
             const img = document.getElementById('viewer-img');
             const delBtn = document.getElementById('viewer-delete-btn');
             const captionEl = document.getElementById('viewer-caption');
@@ -3667,7 +3774,7 @@
             img.onerror = () => { img.src = url; };
             if (tsEl) tsEl.style.display = 'none';
             if (captionEl) { captionEl.textContent = caption; captionEl.style.display = caption ? 'block' : 'none'; }
-            if (delBtn) delBtn.style.display = 'none';
+            if (delBtn) delBtn.style.display = idx >= 0 ? 'inline-block' : 'none';
             document.getElementById('image-viewer').classList.add('active');
         }
 
@@ -3708,7 +3815,9 @@
         async function deleteViewedPhoto() {
             if (isProcessing) return;
             if (!viewerPhotoRecord) return;
-            if (!confirm('确定要删除这张照片？')) return;
+            const recType = viewerPhotoRecord._type || 'photo';
+            const label = recType === 'milestone' ? '里程碑记录' : '照片';
+            if (!confirm(`确定要删除这张${label}？`)) return;
             isProcessing = true;
             closeImageViewer();
             showLoadingToast('删除中...');
@@ -3719,12 +3828,17 @@
                 const res = await fetch('/api/delete', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ type: 'photo', row_idx, drive_file_id })
+                    body: JSON.stringify({ type: recType, row_idx, drive_file_id })
                 });
                 if (!res.ok) throw new Error('删除失败');
                 hideLoadingToast();
-                showToast('照片已删除');
-                await fetchData();
+                showToast(`${label}已删除`);
+                if (currentData[recType]) {
+                    currentData[recType].splice(idx, 1);
+                    try { localStorage.setItem(LS_KEY, JSON.stringify(currentData)); } catch(e) {}
+                    _renderActivePage();
+                }
+                fetchData().catch(e => console.error('后台刷新失败:', e));
             } catch (err) {
                 hideLoadingToast();
                 showToast('删除失败: ' + err.message);
