@@ -53,7 +53,7 @@ SHEET_HEADERS = {
     'poop': ['timestamp', 'type', 'color', 'note'],
     'sleep': ['start_time', 'end_time', 'duration_min', 'note'],
     'photo': ['timestamp', 'drive_url', 'caption'],
-    'milestone': ['date', 'category', 'description'],
+    'milestone': ['date', 'category', 'description', 'drive_url'],
     'other': ['timestamp', 'category', 'content']
 }
 
@@ -140,9 +140,14 @@ def get_drive_upload_service():
 
 
 def ensure_worksheet(sh, name, headers):
-    """确保工作表存在，不存在则创建"""
+    """确保工作表存在且包含所需列，不存在则创建；已有表则补充缺失列头"""
     try:
         ws = sh.worksheet(name)
+        existing = ws.row_values(1)
+        for h in headers:
+            if h not in existing:
+                ws.update_cell(1, len(existing) + 1, h)
+                existing.append(h)
     except gspread.WorksheetNotFound:
         ws = sh.add_worksheet(title=name, rows=1000, cols=len(headers))
         ws.append_row(headers)
@@ -471,7 +476,8 @@ def add_record():
                 row = [
                     data.get('date', get_today_str()),
                     data.get('category', ''),
-                    data.get('description', '')
+                    data.get('description', ''),
+                    data.get('drive_url', '')
                 ]
             elif record_type == 'other':
                 row = [

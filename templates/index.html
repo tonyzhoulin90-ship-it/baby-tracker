@@ -2852,20 +2852,29 @@
         function renderMilestoneTimeline() {
             const container = document.getElementById('milestone-timeline');
             if (!container || !currentData.milestone) return;
-            
+
             let html = '';
             [...currentData.milestone].sort((a, b) => (b.date || '').localeCompare(a.date || '')).forEach(m => {
+                const cap = [m.category, m.description].filter(Boolean).join('：').replace(/'/g, "&apos;");
+                const thumbHtml = m.drive_url ? `
+                    <img src="${getDriveThumbnailUrl(m.drive_url)}"
+                         loading="lazy"
+                         onclick="viewMilestonePhoto('${m.drive_url.replace(/'/g,"&apos;")}','${cap}');event.stopPropagation()"
+                         style="width:100%;max-width:280px;height:auto;border-radius:10px;margin-top:8px;display:block;cursor:pointer;"
+                         onerror="this.style.display='none'">
+                ` : '';
                 html += `
                     <div class="milestone-item">
                         <div class="milestone-date">${m.date}</div>
                         <div class="milestone-content">
                             <div class="timeline-title">${m.category}</div>
                             <div class="timeline-desc">${m.description}</div>
+                            ${thumbHtml}
                         </div>
                     </div>
                 `;
             });
-            
+
             container.innerHTML = html || '<div style="text-align: center; color: var(--text-light); padding: 20px;">暂无里程碑记录</div>';
         }
         
@@ -2947,8 +2956,13 @@
                     const noteHtml = (record.note && !['夜睡','夜晚睡眠'].includes(record.note))
                         ? `<div style="font-size:0.78rem;color:#888;margin-top:2px;">💬 ${record.note}</div>` : '';
 
-                    const photoHtml = (recordType === 'photo' && record.drive_url)
-                        ? `<img src="${getDriveThumbnailUrl(record.drive_url)}" style="width:72px;height:72px;object-fit:cover;border-radius:10px;margin-top:6px;flex-shrink:0;" onclick="event.stopPropagation();viewPhoto(${item.originalIdx})" onerror="this.style.display='none'">` : '';
+                    let photoHtml = '';
+                    if (recordType === 'photo' && record.drive_url) {
+                        photoHtml = `<img src="${getDriveThumbnailUrl(record.drive_url)}" style="width:72px;height:72px;object-fit:cover;border-radius:10px;margin-top:6px;flex-shrink:0;" onclick="event.stopPropagation();viewPhoto(${item.originalIdx})" onerror="this.style.display='none'">`;
+                    } else if (recordType === 'milestone' && record.drive_url) {
+                        const mc = [record.category, record.description].filter(Boolean).join('：').replace(/'/g, "&apos;");
+                        photoHtml = `<img src="${getDriveThumbnailUrl(record.drive_url)}" style="width:72px;height:72px;object-fit:cover;border-radius:10px;margin-top:6px;flex-shrink:0;" onclick="event.stopPropagation();viewMilestonePhoto('${record.drive_url.replace(/'/g,"&apos;")}','${mc}')" onerror="this.style.display='none'">`;
+                    }
 
                     html += `
                         <div style="display:flex;align-items:flex-start;gap:10px;padding:10px 4px;border-bottom:1px solid var(--border);">
@@ -3599,13 +3613,26 @@
         function renderTodayPhotos() {
             const container = document.getElementById('today-photo-grid');
             if (!container) return;
-            
+
             const dateStr = viewDateStr || getTodayStr();
+
+            // 普通照片
             const allPhotos = currentData.photo || [];
-            const dayPhotos = allPhotos.map((p, idx) => ({ ...p, _originalIdx: idx }))
+            const dayPhotos = allPhotos.map((p, idx) => ({ ...p, _originalIdx: idx, _src: 'photo' }))
                                        .filter(p => p.timestamp?.startsWith(dateStr));
-            
-            if (dayPhotos.length === 0) {
+
+            // 里程碑照片（有 drive_url 的）
+            const msPhotos = (currentData.milestone || [])
+                .filter(m => m.date === dateStr && m.drive_url)
+                .map(m => ({
+                    drive_url: m.drive_url,
+                    caption: [m.category, m.description].filter(Boolean).join('：'),
+                    _src: 'milestone'
+                }));
+
+            const combined = [...dayPhotos, ...msPhotos];
+
+            if (combined.length === 0) {
                 container.innerHTML = `
                     <div class="photo-item" style="display:flex;align-items:center;justify-content:center;color:var(--text-light);grid-column:1/-1;">
                         当日还没有照片
@@ -3613,17 +3640,35 @@
                 `;
                 return;
             }
-            
+
             let html = '';
-            dayPhotos.forEach((photo, i) => {
+            combined.forEach(photo => {
                 const thumb = getDriveThumbnailUrl(photo.drive_url);
+                const cap = (photo.caption || '').replace(/'/g, "&apos;");
+                const clickFn = photo._src === 'photo'
+                    ? `viewPhoto(${photo._originalIdx})`
+                    : `viewMilestonePhoto('${photo.drive_url.replace(/'/g,"&apos;")}','${cap}')`;
                 html += `
-                    <div class="photo-item" onclick="viewPhoto(${photo._originalIdx})" style="position:relative;overflow:hidden;border-radius:12px;">
-                        <img src="${thumb}" alt="${photo.caption || ''}" loading="lazy" style="width:100%;height:100%;object-fit:cover;" onerror="this.src='${photo.drive_url}'">
+                    <div class="photo-item" onclick="${clickFn}" style="position:relative;overflow:hidden;border-radius:12px;">
+                        <img src="${thumb}" alt="${cap}" loading="lazy" style="width:100%;height:100%;object-fit:cover;" onerror="this.src='${photo.drive_url}'">
                     </div>
                 `;
             });
             container.innerHTML = html;
+        }
+
+        function viewMilestonePhoto(url, caption) {
+            viewerPhotoRecord = null;
+            const img = document.getElementById('viewer-img');
+            const delBtn = document.getElementById('viewer-delete-btn');
+            const captionEl = document.getElementById('viewer-caption');
+            const tsEl = document.getElementById('viewer-timestamp');
+            img.src = getDriveFullUrl(url);
+            img.onerror = () => { img.src = url; };
+            if (tsEl) tsEl.style.display = 'none';
+            if (captionEl) { captionEl.textContent = caption; captionEl.style.display = caption ? 'block' : 'none'; }
+            if (delBtn) delBtn.style.display = 'none';
+            document.getElementById('image-viewer').classList.add('active');
         }
 
         function viewPhoto(originalIdx) {
