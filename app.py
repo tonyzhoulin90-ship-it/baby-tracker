@@ -140,16 +140,19 @@ def get_drive_upload_service():
 
 
 def ensure_worksheet(sh, name, headers):
-    """确保工作表存在且包含所需列，不存在则创建；已有表则补充缺失列头"""
+    """确保工作表存在且包含所需列，不存在则创建；已有表则先扩列再补列头"""
     try:
         ws = sh.worksheet(name)
         existing = ws.row_values(1)
-        for h in headers:
-            if h not in existing:
+        missing = [h for h in headers if h not in existing]
+        if missing:
+            new_col_count = len(existing) + len(missing)
+            ws.resize(rows=ws.row_count, cols=new_col_count)
+            for h in missing:
                 ws.update_cell(1, len(existing) + 1, h)
                 existing.append(h)
     except gspread.WorksheetNotFound:
-        ws = sh.add_worksheet(title=name, rows=1000, cols=len(headers))
+        ws = sh.add_worksheet(title=name, rows=1000, cols=max(len(headers), 10))
         ws.append_row(headers)
     return ws
 
