@@ -3122,7 +3122,6 @@
             const barWidth = (width - 40) / dailySleep.length;
             const maxMins  = Math.max(...dailySleep.map(d => d.mins), 60);
 
-            const sleepLabelStep = currentSleepPeriod >= 30 ? 5 : currentSleepPeriod >= 14 ? 2 : 1;
             dailySleep.forEach((d, i) => {
                 const barH = d.mins > 0 ? Math.max((d.mins / maxMins) * (height - 95), 5) : 0;
                 const x = 20 + i * barWidth + barWidth * 0.2;
@@ -3131,15 +3130,19 @@
                     ctx.fillStyle = '#5856D6';
                     ctx.fillRect(x, y, barWidth * 0.6, barH);
                     ctx.fillStyle = '#333';
-                    ctx.font = 'bold 10px sans-serif'; ctx.textAlign = 'center';
                     const hrs = (d.mins / 60).toFixed(1);
-                    if (currentSleepPeriod < 30) ctx.fillText(`${hrs}h`, x + barWidth * 0.3, y - 5);
+                    if (currentSleepPeriod >= 30) {
+                        ctx.font = '7px sans-serif'; ctx.textAlign = 'center';
+                        ctx.fillText(hrs, x + barWidth * 0.3, y - 3);
+                    } else {
+                        ctx.font = 'bold 10px sans-serif'; ctx.textAlign = 'center';
+                        ctx.fillText(`${hrs}h`, x + barWidth * 0.3, y - 5);
+                    }
                 }
-                if (i % sleepLabelStep === 0) {
-                    ctx.fillStyle = '#666'; ctx.font = '10px sans-serif'; ctx.textAlign = 'center';
-                    const lbl = currentSleepPeriod >= 30 ? `${d.date}` : d.fullDate;
-                    ctx.fillText(lbl, x + barWidth * 0.3, height - 30);
-                }
+                ctx.fillStyle = '#666'; ctx.textAlign = 'center';
+                ctx.font = currentSleepPeriod >= 30 ? '7px sans-serif' : '10px sans-serif';
+                const lbl = currentSleepPeriod >= 30 ? `${d.date}` : d.fullDate;
+                ctx.fillText(lbl, x + barWidth * 0.3, height - 30);
             });
         }
         
@@ -3183,7 +3186,6 @@
             const barWidth = (width - 40) / dailyMilk.length;
             const maxAmount = Math.max(...dailyMilk.map(d => d.amount), 200); // 降低最小值让柱子更明显
 
-            const milkLabelStep = currentPeriod >= 30 ? 5 : currentPeriod >= 14 ? 2 : 1;
             dailyMilk.forEach((d, i) => {
                 const barHeight = d.amount > 0 ? Math.max((d.amount / maxAmount) * (height - 95), 5) : 0;
                 const x = 20 + i * barWidth + barWidth * 0.2;
@@ -3193,22 +3195,21 @@
                 if (d.amount > 0) {
                     ctx.fillStyle = '#007AFF';
                     ctx.fillRect(x, y, barWidth * 0.6, barHeight);
-                    if (currentPeriod < 30) {
-                        ctx.fillStyle = '#333';
-                        ctx.font = 'bold 11px sans-serif';
-                        ctx.textAlign = 'center';
+                    ctx.fillStyle = '#333';
+                    if (currentPeriod >= 30) {
+                        ctx.font = '7px sans-serif'; ctx.textAlign = 'center';
+                        ctx.fillText(d.amount, x + barWidth * 0.3, y - 3);
+                    } else {
+                        ctx.font = 'bold 11px sans-serif'; ctx.textAlign = 'center';
                         ctx.fillText(`${d.amount}`, x + barWidth * 0.3, y - 5);
                     }
                 }
 
-                // 绘制日期（按间隔显示）
-                if (i % milkLabelStep === 0) {
-                    ctx.fillStyle = '#666';
-                    ctx.font = '10px sans-serif';
-                    ctx.textAlign = 'center';
-                    const lbl = currentPeriod >= 30 ? `${d.date}` : d.fullDate;
-                    ctx.fillText(lbl, x + barWidth * 0.3, height - 30);
-                }
+                // 绘制日期
+                ctx.fillStyle = '#666'; ctx.textAlign = 'center';
+                ctx.font = currentPeriod >= 30 ? '7px sans-serif' : '10px sans-serif';
+                const lbl = currentPeriod >= 30 ? `${d.date}` : d.fullDate;
+                ctx.fillText(lbl, x + barWidth * 0.3, height - 30);
             });
         }
         
