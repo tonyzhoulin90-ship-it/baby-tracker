@@ -3821,12 +3821,12 @@
             const recType = viewerPhotoRecord._type || 'photo';
             const label = recType === 'milestone' ? '里程碑记录' : '照片';
             if (!confirm(`确定要删除这张${label}？`)) return;
-            isProcessing = true;
-            closeImageViewer();
-            showLoadingToast('删除中...');
             const idx = viewerPhotoRecord._originalIdx;
             const row_idx = idx + 2;
             const drive_file_id = getDriveFileId(viewerPhotoRecord.drive_url);
+            isProcessing = true;
+            closeImageViewer();
+            showLoadingToast('删除中...');
             try {
                 const res = await fetch('/api/delete', {
                     method: 'POST',
